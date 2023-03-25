@@ -80,3 +80,5 @@ INFO:path_planner.hybrid_astar:Created HybridAstar instance
 2023-03-25 18:36:05,528:INFO:path_planner.hybrid_astar: Created HybridAstar instance
 2023-03-25 18:58:31,094:INFO:path_planner.hybrid_astar: Created HybridAstar instance
 2023-03-25 19:04:02,203:INFO:path_planner.hybrid_astar: Created HybridAstar instance
+2023-03-25 20:31:20,433:INFO:path_planner.hybrid_astar: Created HybridAstar instance
+2023-03-25 20:39:42,488:INFO:path_planner.hybrid_astar: Created HybridAstar instance

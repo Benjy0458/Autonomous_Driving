@@ -593,3 +593,19 @@
 2023-03-25 19:04:30,231:DEBUG:__main__: Successfully terminated the path planner subprocess.
 2023-03-25 19:04:30,232:DEBUG:__main__: Successfully terminated the behaviour tree subprocess.
 2023-03-25 19:04:30,232:INFO:__main__: Simulation terminated successfully: 1 scenarios simulated with 0 collisions.
+2023-03-25 20:31:17,434:INFO:__main__: Created new instance of the simulation environment.
+2023-03-25 20:31:17,434:INFO:__main__: Created new instance of the traffic manager.
+2023-03-25 20:31:17,439:INFO:__main__: Created new instance of the agent vehicle.
+2023-03-25 20:31:17,495:INFO:__main__: Simulation started.
+2023-03-25 20:34:04,400:DEBUG:__main__: Successfully terminated the spawn vehicles thread.
+2023-03-25 20:34:04,400:DEBUG:__main__: Successfully terminated the path planner subprocess.
+2023-03-25 20:34:04,401:DEBUG:__main__: Successfully terminated the behaviour tree subprocess.
+2023-03-25 20:34:04,401:INFO:__main__: Simulation terminated successfully: 9 scenarios simulated with 1 collisions.
+2023-03-25 20:39:39,512:INFO:__main__: Created new instance of the simulation environment.
+2023-03-25 20:39:39,512:INFO:__main__: Created new instance of the traffic manager.
+2023-03-25 20:39:39,518:INFO:__main__: Created new instance of the agent vehicle.
+2023-03-25 20:39:39,554:INFO:__main__: Simulation started.
+2023-03-25 20:43:09,323:DEBUG:__main__: Successfully terminated the spawn vehicles thread.
+2023-03-25 20:43:09,324:DEBUG:__main__: Successfully terminated the path planner subprocess.
+2023-03-25 20:43:09,324:DEBUG:__main__: Successfully terminated the behaviour tree subprocess.
+2023-03-25 20:43:09,325:INFO:__main__: Simulation terminated successfully: 10 scenarios simulated with 0 collisions.

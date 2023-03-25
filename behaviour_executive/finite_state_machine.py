@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-file_handler = logging.FileHandler('finite_state_machine.log')
+file_handler = logging.FileHandler('finite_state_machine.log' if __name__ == "__main__" else f'LogFiles/{__name__}.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)  # Add file handler to the logger
 
