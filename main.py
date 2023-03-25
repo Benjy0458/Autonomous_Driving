@@ -359,7 +359,7 @@ class Agent:
     def reset(self):
         """Reset the agent"""
         self.x_pos = 0
-        self.y_pos = LANES[self.lane]
+        self.y_pos = LANES[5]
         self.x_velocity = LANE_VELOCITIES[self.lane]
         self.goal_pos = [self.x_pos + 40, self.y_pos]  # Goal position for the path planner
         self.goal_pos2 = self.goal_pos
@@ -384,7 +384,7 @@ class Agent:
 
         # Behaviour decision-making # todo Easily switch between FSM and BT
         # Increment the agent.lane when we change to a new lane
-        if abs(self.y_pos - self.goal_pos[1]) < 2:
+        if abs(self.y_pos - self.goal_pos[1]) < 4:
             self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
         # Finite state machine
         # self.goal_pos = self.fsm.on_event()  # Update behavioural planner # todo Fix the finite state machine
