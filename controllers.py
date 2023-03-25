@@ -1,4 +1,4 @@
-from config import FPS
+from scenario.highway import FPS
 
 import logging
 
