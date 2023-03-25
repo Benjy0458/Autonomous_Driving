@@ -1,0 +1,35 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Blackboard Demo" [fillcolor=orange, fontcolor=black, fontsize=9, label="Blackboard Demo", shape=box, style=filled];
+"Set Nested" [fillcolor=gray, fontcolor=black, fontsize=9, label="Set Nested", shape=ellipse, style=filled];
+"Blackboard Demo" -> "Set Nested";
+Writer [fillcolor=gray, fontcolor=black, fontsize=9, label=Writer, shape=ellipse, style=filled];
+"Blackboard Demo" -> Writer;
+"Check Nested Foo" [fillcolor=gray, fontcolor=black, fontsize=9, label="Check Nested Foo", shape=ellipse, style=filled];
+"Blackboard Demo" -> "Check Nested Foo";
+ParamsAndState [fillcolor=gray, fontcolor=black, fontsize=9, label=ParamsAndState, shape=ellipse, style=filled];
+"Blackboard Demo" -> ParamsAndState;
+"/parameters/default_speed" -> ParamsAndState  [color=green, constraint=False, weight=0];
+Configuration -> "/parameters/default_speed"  [color=deepskyblue, constraint=False, weight=0];
+ParamsAndState -> "/state/current_speed"  [color=blue, constraint=False, weight=0];
+"/nested" -> "Check Nested Foo"  [color=green, constraint=False, weight=0];
+"Set Nested" -> "/nested"  [color=blue, constraint=False, weight=0];
+Writer -> "/spaghetti"  [color=blue, constraint=False, weight=0];
+"/dude" -> Writer  [color=green, constraint=False, weight=0];
+Configuration -> "/dude"  [color=blue, constraint=False, weight=0];
+subgraph Blackboard {
+id=Blackboard;
+label=Blackboard;
+rank=sink;
+Configuration [color=blue, fillcolor=gray, fontcolor=blue, fontsize=7, label=Configuration, shape=ellipse, style=filled];
+"/parameters/default_speed" [color=blue, fillcolor=white, fixedsize=False, fontcolor=blue, fontsize=8, height=0, label="/parameters/default_speed: 30.0", shape=box, style=filled, width=0];
+"/state/current_speed" [color=blue, fillcolor=white, fixedsize=False, fontcolor=blue, fontsize=8, height=0, label="/state/current_speed: -", shape=box, style=filled, width=0];
+"/nested" [color=blue, fillcolor=white, fixedsize=False, fontcolor=blue, fontsize=8, height=0, label="/nested: -", shape=box, style=filled, width=0];
+"/spaghetti" [color=blue, fillcolor=white, fixedsize=False, fontcolor=blue, fontsize=8, height=0, label="/spaghetti: -", shape=box, style=filled, width=0];
+"/dude" [color=blue, fillcolor=white, fixedsize=False, fontcolor=blue, fontsize=8, height=0, label="/dude: Bob", shape=box, style=filled, width=0];
+}
+
+}
