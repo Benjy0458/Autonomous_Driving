@@ -19,7 +19,7 @@ Inputs: Current position, Goal position, obstacle locations
 """
 import time
 
-from config import WINDOW_WIDTH, WINDOW_HEIGHT, LANES
+from scenario.highway import WINDOW_WIDTH, WINDOW_HEIGHT, LANES
 
 # ----------------
 import numpy as np

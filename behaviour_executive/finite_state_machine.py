@@ -1,4 +1,4 @@
-from config import LANES
+from scenario.highway import LANES
 
 import logging
 

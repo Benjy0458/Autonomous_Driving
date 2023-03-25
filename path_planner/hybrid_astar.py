@@ -1,5 +1,5 @@
 # ---------------------
-from config import WINDOW_HEIGHT, WINDOW_WIDTH, LANES
+from scenario.highway import WINDOW_HEIGHT, WINDOW_WIDTH, LANES
 import pygame
 import numpy as np
 import heapq as hq
