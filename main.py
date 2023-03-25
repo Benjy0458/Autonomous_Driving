@@ -387,16 +387,16 @@ class Agent:
         if abs(self.y_pos - self.goal_pos[1]) < 2:
             self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
         # Finite state machine
-        # self.goal_pos = self.fsm.on_event()  # Update behavioural planner # todo Fix the finite state machine
+        self.goal_pos = self.fsm.on_event()  # Update behavioural planner # todo Fix the finite state machine
 
         # Behaviour tree ----
         """Send the current agent instance to the queue on each iteration
                 receive new goal position from return queue"""
-        self.bt_agent_data.initialise(self)  # Update agent data to send to the BT
-        self.bt_send.put(self.bt_agent_data)  # Send latest agent data to the queue
-        while not self.bt_return.empty():
-            # _ = self.bt_return.get()  # Must empty the queue into a throwaway variable so while loop finishes
-            self.goal_pos = self.bt_return.get()  # Get new goal position from the BT
+        # self.bt_agent_data.initialise(self)  # Update agent data to send to the BT
+        # self.bt_send.put(self.bt_agent_data)  # Send latest agent data to the queue
+        # while not self.bt_return.empty():
+        #     # _ = self.bt_return.get()  # Must empty the queue into a throwaway variable so while loop finishes
+        #     self.goal_pos = self.bt_return.get()  # Get new goal position from the BT
         # ---
 
         cars = [car.rect for car in self.sensor.radar.closest_cars if car]  # List of pygame.rect objects

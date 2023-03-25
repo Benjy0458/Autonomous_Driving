@@ -1,4 +1,5 @@
-from config import LANES
+from scenario.highway import LANES
+import situational_context
 
 import logging
 
@@ -9,6 +10,36 @@ formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 file_handler = logging.FileHandler('finite_state_machine.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)  # Add file handler to the logger
+
+
+class AgentDummy:
+    """A dummy class to represent the agent object."""
+    def __init__(self) -> None:
+        """Initialise variables to arbitrary defaults."""
+        self.goal_pos = 10
+        self.x_velocity = 70
+        self.max_speed = 77
+        self.length = 15
+
+        self.x_pos = 0
+        self.lane = 5
+
+        # Surrounding vehicles
+        self.front_car_distance = 100
+        self.front_car_velocity = 50
+
+        self.front_right_car_distance = 250
+        self.rear_right_car_distance = 250
+
+        self.front_left_car_distance = 250
+        self.front_left_car_velocity = 60
+        self.rear_left_car_distance = 250
+
+        self.rear_car_velocity = 50
+        self.rear_car_distance = 250
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
 
 
 class State(object):
@@ -121,7 +152,7 @@ class LaneChangeLeftState(State):
     def action(self):
         if self.left_lane_free():
             goal_pos = [self.agent.x_pos + 0.5 * self.sensor.radar.distances[2], LANES[self.agent.lane - 1]]
-            # self.agent.change_lane('l')
+            self.agent.change_lane('l')
             return goal_pos
         else:
             return self.agent.goal_pos
@@ -141,10 +172,14 @@ class LaneChangeRightState(State):
 
         return self
 
+        # if self.vehicle_ahead():
+        #     return FollowState(self.agent, self.sensor)
+        # return FreeRideState(self.agent, self.sensor)
+
     def action(self):
         goal_pos = [self.sensor.radar.distances[4] + self.agent.x_pos, LANES[self.agent.lane + 1]] \
             if self.agent.lane < 5 else [self.agent.x_pos + 0.5 * self.sensor.radar.distances[0], self.agent.y_pos]
-        # self.agent.change_lane('r')
+        self.agent.change_lane('r')
         return goal_pos
 
 
