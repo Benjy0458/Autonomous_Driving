@@ -401,8 +401,8 @@ class Agent:
 
         cars = [car.rect for car in self.sensor.radar.closest_cars if car]  # List of pygame.rect objects
         # Send data for the path planner
-        # todo Consider modifying the start position of the next path search to be the goal position of the previous
-        #  if the action hasn't changed.
+        # todo If the y-value of the goal position hasn't changed, the start position of the path search
+        #      should be the previous goal position.
         self.send_queue.put(((self.x_pos, self.y_pos, 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
         # Retrieve path from the path planner
         while not self.return_queue.empty():
@@ -494,6 +494,7 @@ class Collision:
         if collide != -1:
             self.agent.color = (255, 0, 0)  # change the color to red
             if self.agent.x_pos > scene.DEAD_ZONE:
+                pygame.image.save(world.display_surface, f"CollisionHistory/{time.time()}.jpeg")
                 self.agent.n_hits += 1  # Do not penalise collisions where a npc spawns on top of the agent.
                 self.agent.terminal_count += 1
             return True  # Finish the frame
@@ -502,7 +503,6 @@ class Collision:
             self.agent.terminal_count += 1
             return True
         else:
-            # self.agent.color = (0, 0, 0)
             return False
 
 
