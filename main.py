@@ -113,7 +113,7 @@ class World:
             # todo Caption should only show current state if FSM is active
             agent_cap = f"Scenarios simulated: {self.agent.terminal_count}, Collisions: {self.agent.n_hits}, " \
                         f"Speed: {round(self.agent.x_velocity)} mph, " \
-                        f"Goal pos: {[round(v) for v in self.agent.goal_pos], [round(v) for v in self.agent.goal_pos2]}, " \
+                        f"Goal pos: {[round(v) for v in self.agent.goal_pos]}, " \
                         f"Current state: {str(self.agent.fsm.state)}, Lane: {self.agent.lane}"
             cap.append(agent_cap)
 
@@ -322,7 +322,7 @@ class Agent:
         def initialise(self, agent) -> None:
             """Resets the data for the BT."""
             self.goal_pos = agent.goal_pos
-            self.goal_pos2 = self.goal_pos
+            # self.goal_pos2 = self.goal_pos
             self.x_velocity = agent.x_velocity
             self.max_speed = agent.max_speed
             self.length = agent.length
@@ -359,10 +359,10 @@ class Agent:
     def reset(self):
         """Reset the agent"""
         self.x_pos = 0
-        self.y_pos = LANES[5]
+        self.y_pos = LANES[self.lane]
         self.x_velocity = LANE_VELOCITIES[self.lane]
         self.goal_pos = [self.x_pos + 40, self.y_pos]  # Goal position for the path planner
-        self.goal_pos2 = self.goal_pos
+        # self.goal_pos2 = self.goal_pos
         self.path = {}
 
     def update_position(self, vehicles):
@@ -514,7 +514,7 @@ class Radar:
         self.closest_cars = [None for _ in range(6)]
         self.distances = [None for _ in range(6)]
 
-    def observation(self, vehicles):
+    def observation(self, vehicles: [Vehicle]) -> [[Vehicle], [int]]:
         """x = lane - self.agent.lane
                 f(-1) = 2, f(0) = 0, f(1) = 4
                 f(x) = 3 * x**2 + x
@@ -522,8 +522,6 @@ class Radar:
                 Need to ignore other x values
                 """
         car_lists = [[], [], [], [], [], []]  # Nested list to store vehicles by lane index
-
-        # index = lambda x: 3 * x ** 2 + x
 
         def index(x):
             return 3 * x ** 2 + x
@@ -538,15 +536,15 @@ class Radar:
         """Iterate through each lane in car_lists
             Calculate the relative distance to each vehicle
             keep the closest vehicle
-            return list containing closest vehicle in each lane
-                """
+            return list containing closest vehicle in each lane"""
         self.closest_cars = [[] for _ in range(6)]
         self.distances = [self.sensor_range for _ in range(6)]
 
-        # rel_distance = lambda v: self.agent.rect.left - v.rect.right if i % 2 else v.rect.left - self.agent.rect.right
+        def rel_distance(v: Vehicle) -> int:
+            return min([abs(self.agent.rect.left - v.rect.right), abs(v.rect.left - self.agent.rect.right)])
 
-        def rel_distance(v):
-            return self.agent.rect.left - v.rect.right if i % 2 else v.rect.left - self.agent.rect.right
+        # self.closest_cars = [min(lane_direction, key=rel_distance, default=None) for lane_direction in car_lists]
+        # self.distances = [rel_distance(car) if car is not None else self.sensor_range for car in self.closest_cars]
 
         for i, lane_direction in enumerate(car_lists):
             for vehicle in lane_direction:
