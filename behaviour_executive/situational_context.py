@@ -10,7 +10,7 @@ def vehicle_ahead(agent: isinstance) -> bool:
 
 
 def right_lane_free(agent: isinstance) -> bool:
-    return (agent.front_right_car_distance > 10) and (agent.rear_right_car_distance > 20)
+    return (agent.front_right_car_distance > 20) and (agent.rear_right_car_distance > 20)
 
 
 def left_lane_free(agent: isinstance) -> bool:

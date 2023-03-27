@@ -265,52 +265,12 @@ def main(render=True):
     blackboard.agent = agent  # Assign the agent object to the blackboard
     blackboard.new_goal_pos = 0  # Initialise the new_goal_pos parameter
 
-    # # Left sub-tree -----------------
-    # # Conditions
-    # clear_road = Condition(name="Clear Road", condition=situational_context.clear_road)
-    # vehicle_approaching = Condition(name="Vehicle Approaching", condition=situational_context.vehicle_approaching)
-    # right_lane_free = Condition(name="Right Lane Free", condition=situational_context.right_lane_free)
-    #
-    # # Decorators
-    # inverter_vehicle_approaching = py_trees.decorators.Inverter(
-    #     name="Inverter",
-    #     child=vehicle_approaching
-    #     )
-    # inverter_right_lane_free = py_trees.decorators.Inverter(
-    #     name="Inverter",
-    #     child=right_lane_free
-    # )
-    #
-    # # Actions
-    # lane_change_right = Action(name="Lane Change Right", behaviour=mission_planner.lane_change_right)
-    # free_ride = Action(name="Free Ride", behaviour=mission_planner.free_ride)
-    #
-    # # Composites
-    # yield_to_vehicle = create_selector([inverter_vehicle_approaching, inverter_right_lane_free, lane_change_right])
-    # free_ride_seq = create_sequence([clear_road, yield_to_vehicle, free_ride])
-    #
-    # # Right sub-tree ---------
-    # # Conditions
-    # slow_vehicle = Condition(name="Slow Vehicle", condition=situational_context.slow_vehicle)
-    # left_lane_free = Condition(name="Left Lane Free", condition=situational_context.left_lane_free)
-    #
-    # # Actions
-    # lane_change_left = Action(name="Lane Change Left", behaviour=mission_planner.lane_change_left)
-    # follow = Action(name="Follow", behaviour=mission_planner.follow)
-    #
-    # # Composites
-    # overtake = create_sequence([slow_vehicle, left_lane_free, lane_change_left])
-    # follow_sel = create_selector([overtake, follow])
-    #
-    # # Create root
-    # root = create_selector([free_ride_seq, follow_sel])
-
     root = highway_drive()
 
     # Rendering
     if render:
         # py_trees.display.render_dot_tree(root, with_blackboard_variables=True)
-        dottree = py_trees.display.dot_tree(root, with_blackboard_variables=True, with_qualified_names=True)
+        dottree = py_trees.display.dot_tree(root, with_blackboard_variables=True, with_qualified_names=False)
         dottree.write_svg("logic_diagram/AutonomousHighwayDriving.svg")
         sys.exit()
 
@@ -355,4 +315,4 @@ def main2():
 
 if __name__ == "__main__":
     # main2()
-    main(render=True)
+    main(render=False)
