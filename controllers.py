@@ -74,6 +74,9 @@ class IDM:
         while True:
             yield acc
             s_star = self.minimum_spacing + self.agent.x_velocity * self.time_headway
+            # If the desired follow distance is greater than the gap between front/behind vehicle
+            if s_star > self.sensor.distances[0] + self.sensor.distances[1]:
+                s_star = 0.5 * (self.sensor.distances[0] + self.sensor.distances[1])
             try:
                 acc = self.max_acceleration * (1 - (self.agent.x_velocity / self.max_velocity) ** self.delta - (s_star / self.sensor.distances[0]) ** 2)
             except ZeroDivisionError:

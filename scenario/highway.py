@@ -3,7 +3,7 @@ WINDOW_WIDTH = 1536  # Width of the Pygame window (default=1536)
 WINDOW_HEIGHT = 120  # Height of the Pygame window (default=120)
 BACKGROUND_IMAGE = 'highway.jpg'  # Background image for the Pygame window
 
-DEAD_ZONE = 100  # Collisions occurring before this line are not counted
+DEAD_ZONE = 100  # CollisionHistory occurring before this line are not counted
 
 # y position of each lane
 # Driving on the right
@@ -29,10 +29,10 @@ LANES = {
 # The velocity corresponding to each lane (mph)
 LANE_VELOCITIES = {
     0: -50,
-    1: -60,
-    2: -70,
-    3: 70,
-    4: 60,
+    1: -65,
+    2: -80,
+    3: 80,
+    4: 65,
     5: 50,
 }
 

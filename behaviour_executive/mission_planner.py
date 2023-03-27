@@ -13,13 +13,11 @@ def follow(agent: isinstance) -> tuple[float, float]:
 
 
 def lane_change_right(agent: isinstance) -> tuple[float, float]:
-    goal_pos = (agent.front_right_car_distance + agent.x_pos, LANES[agent.lane + 1]) \
+    goal_pos = (agent.x_pos + 0.5 * agent.front_right_car_distance, LANES[agent.lane + 1]) \
         if agent.lane < 5 else (agent.x_pos + 0.5 * agent.front_car_distance, LANES[agent.lane])
-    # agent.change_lane("r")
     return goal_pos
 
 
 def lane_change_left(agent: isinstance) -> tuple[float, float]:
     goal_pos = (agent.x_pos + 0.5 * agent.front_left_car_distance, LANES[agent.lane - 1])
-    # agent.change_lane("l")
     return goal_pos

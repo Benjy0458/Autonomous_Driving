@@ -2,7 +2,7 @@
 
 
 def slow_vehicle(agent: isinstance) -> bool:
-    return agent.front_car_velocity < agent.max_speed - 10
+    return agent.front_car_velocity < agent.max_speed - 5
 
 
 def vehicle_ahead(agent: isinstance) -> bool:
@@ -10,7 +10,7 @@ def vehicle_ahead(agent: isinstance) -> bool:
 
 
 def right_lane_free(agent: isinstance) -> bool:
-    return (agent.front_right_car_distance > 200) and (agent.rear_right_car_distance > 20)
+    return (agent.front_right_car_distance > 20) and (agent.rear_right_car_distance > 20)
 
 
 def left_lane_free(agent: isinstance) -> bool:
@@ -29,4 +29,4 @@ def clear_road(agent: isinstance) -> bool:
 
 def vehicle_approaching(agent: isinstance) -> bool:
     """If velocity of car behind in current lane is greater than target velocity and distance <= some_distance."""
-    return agent.rear_car_velocity > agent.front_car_velocity and agent.rear_car_distance < 50
+    return agent.rear_car_velocity > agent.x_velocity + 3 and agent.rear_car_distance < 50
