@@ -1,3 +1,5 @@
+from math import sqrt
+
 from scenario.highway import FPS
 
 import logging
@@ -83,14 +85,45 @@ class IDM:
                 logger.debug(f'{self.__class__.__name__}: IDM: Zero division attempted. Looks like there was an accident')
 
 
-def idm(desired_velocity, max_acceleration, acc_bar=0):
-    desired_velocity = desired_velocity  # The velocity the vehicle would drive at in free traffic
-    minimum_spacing = 3  # The minimum desired net distance. (Car can't move if distance to the car in front isn't greater than this.)
-    time_headway = 1  # The minimum possible time to the vehicle in front
-    max_acc = max_acceleration  # The max vehicle acceleration
+def idm(driving_style: str, lane_velocity: float):
+    driving_styles = {
+        "safe": {
+            'desired_velocity': lane_velocity,  # lane velocity
+            'time_headway': 1,  # 0.8 - 2 s
+            'acceleration': 3,  # 0.8 - 2.5 m/s^2
+            'deceleration': 9.81,  # ~2 m/s^2
+        },
+        "aggressive": {
+            'desired_velocity': lane_velocity,  # lane velocity
+            'time_headway': 1,  # 0.8 - 2 s
+            'acceleration': 3,  # 0.8 - 2.5 m/s^2
+            'deceleration': 9.81,  # ~2 m/s^2
+        },
+        "wide_load": {
+            'desired_velocity': lane_velocity,  # lane velocity
+            'time_headway': 1,  # 0.8 - 2 s
+            'acceleration': 3,  # 0.8 - 2.5 m/s^2
+            'deceleration': 9.81,  # ~2 m/s^2
+        },
+    }
+    style = driving_styles[driving_style]
+    desired_velocity = style['desired_velocity']  # The velocity the vehicle would drive at in free traffic
+    minimum_spacing = 3  # Car can't move if distance to the car in front is less than this
+    time_headway = style['desired_velocity']  # The minimum possible time to the vehicle in front
+    a = style['acceleration']  # The max vehicle acceleration
+    b = style['deceleration']  # The max vehicle deceleration
     delta = 4  # Acceleration exponent
-    acc = acc_bar # Initial control
+    acc = 0  # Initial control
     while True:
         velocity_x, front_car_distance, front_car_velocity = yield acc
-        s_star = minimum_spacing + velocity_x * time_headway
-        acc = max_acc * (1 - (velocity_x / desired_velocity) ** delta - (s_star / front_car_distance) ** 2)
+        # Desired dynamical distance
+        s_star = minimum_spacing + max(0, velocity_x * time_headway +
+                                       (velocity_x * (velocity_x - front_car_velocity) / (2 * sqrt(a * b))))
+        desired_acceleration = (1 - (velocity_x / desired_velocity) ** delta)  # Desired acceleration on a free road
+
+        try:
+            braking_term = (s_star / front_car_distance) ** 2
+        except ZeroDivisionError:
+            braking_term = 0
+
+        acc = a * (desired_acceleration - braking_term)

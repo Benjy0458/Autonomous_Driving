@@ -1,4 +1,4 @@
-FPS = 360  # Target frame rate for the simulation
+FPS = 480  # Target frame rate for the simulation
 WINDOW_WIDTH = 1536  # Width of the Pygame window (default=1536)
 WINDOW_HEIGHT = 120  # Height of the Pygame window (default=120)
 BACKGROUND_IMAGE = 'highway.jpg'  # Background image for the Pygame window
@@ -29,10 +29,10 @@ LANES = {
 # The velocity corresponding to each lane (mph)
 LANE_VELOCITIES = {
     0: -50,
-    1: -65,
-    2: -80,
-    3: 80,
-    4: 65,
+    1: -60,
+    2: -70,
+    3: 70,
+    4: 60,
     5: 50,
 }
 

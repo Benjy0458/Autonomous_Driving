@@ -17,7 +17,7 @@ def left_lane_free(agent: isinstance) -> bool:
     """Left lane free only if front vehicle is at least 2/3 the current follow distance in front,
         the separation between vehicles in the left lane is at least the safe follow distance and
         the distance to the vehicle behind in the left lane is at least the safe follow distance."""
-    return (agent.front_left_car_distance > agent.front_car_distance * 2 / 3) and (
+    return (agent.lane > 3) and (agent.front_left_car_distance > agent.front_car_distance * 2 / 3) and (
             agent.front_left_car_distance + agent.rear_left_car_distance >
             2 * agent.front_left_car_velocity / 2.237 + 2 * agent.length) and (
             agent.rear_left_car_distance > 2 * agent.front_left_car_velocity / 2.237)

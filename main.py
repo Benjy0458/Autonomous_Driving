@@ -16,7 +16,7 @@ from scipy import interpolate as itp
 import numpy as np
 from math import ceil
 
-from controllers import PID, IDM
+from controllers import PID, IDM, idm
 
 from scenario.highway import LANES, FPS, LANE_VELOCITIES
 import scenario.highway as scene
@@ -38,6 +38,7 @@ TIME_GAIN = 1  # Speed up the simulation # todo Doesn't affect path planner or B
 FPS /= TIME_GAIN
 
 TRAFFIC_DENSITY = 1  # Density of NPC vehicles in the simulation
+
 
 # =============================
 # Classes
@@ -107,7 +108,7 @@ class World:
         sim_cap = f"Elapsed time: {round(elapsed_time)}, FPS: {round(clock.get_fps())}"
         cap.append(sim_cap)
         if self.TM:
-            tm_cap = f"Num Vehicles: {self.TM and len(self.TM.vehicles)}, Lane dist: {tracks_count}"
+            tm_cap = f"Num Vehicles: {sum(tracks_count)}, Lane dist: {tracks_count}"
             cap.append(tm_cap)
         if self.agent:
             # todo Caption should only show current state if FSM is active
@@ -122,11 +123,13 @@ class World:
 
     def update_vehicles(self) -> None:
         """Updates the positions of all traffic on the screen. Removes vehicles that have moved off-screen."""
-        [car.update_position() if 0 <= car.x_pos <= scene.WINDOW_WIDTH else self.TM.vehicles.remove(car)
-         for car in self.TM.vehicles]
+        # [car.update_position() if 0 <= car.x_pos <= scene.WINDOW_WIDTH else self.TM.vehicles.remove(car)
+        #  for car in self.TM.vehicles]
+        [car.update_position() if 0 <= car.x_pos <= scene.WINDOW_WIDTH else self.TM.ordered_vehicles[i].remove(car)
+         for i, lane in enumerate(self.TM.ordered_vehicles) for car in lane]
 
     def update_agent(self) -> None:
-        self.agent.update_position(self.TM and self.TM.vehicles)  # Update the agent
+        self.agent.update_position(self.TM and self.TM.ordered_vehicles)  # Update the agent
 
     def draw_window(self) -> None:
         def draw_radar(horizontal: bool = False) -> None:
@@ -138,7 +141,8 @@ class World:
         self.display_surface.blit(self.image, (0, 0))  # Fill the pygame window with the background image
         self.agent and draw_radar(horizontal=True)
         # Draw traffic
-        self.TM and [pygame.draw.rect(self.display_surface, car.colour, car.rect) for car in self.TM.vehicles]
+        # self.TM and [pygame.draw.rect(self.display_surface, car.colour, car.rect) for car in self.TM.vehicles]
+        self.TM and [pygame.draw.rect(self.display_surface, car.colour, car.rect) for lane in self.TM.ordered_vehicles for car in lane]
         if self.agent:
             # Draw path
             (len(self.agent.path) > 1 and pygame.draw.lines(self.display_surface, (250, 0, 250),
@@ -170,6 +174,7 @@ class TrafficManager:
 
     def __init__(self):
         self.vehicles = []  # Keeps track of the vehicles currently in the window
+        self.ordered_vehicles = [[], [], [], [], [], []]
         self.timed_spawn = RepeatedTimer(1 / (TRAFFIC_DENSITY * TIME_GAIN), self.spawn_vehicles)
         logger.info('Created new instance of the traffic manager.')
 
@@ -178,29 +183,50 @@ class TrafficManager:
         max_vehicles = 3
         new_vehicles = []  # Temporary list to store our new vehicles.
         number_of_vehicles = random.randint(0, max_vehicles)  # Assign a random number of vehicles to spawn in a range.
+        vehicle_categories = random.choices(population=["car", "truck"], weights=[0.4, 0.6], k=number_of_vehicles)
+        # todo Global vehicles list actually has structure [[], [], [], [], [], []]
+        #  Creating vehicle: vehicle in front is just last item in lane sublist.
+        #  Then vehicle is appended to the corresponding lane sublist
 
-        for i in range(number_of_vehicles):
-            new_vehicle = Vehicle()  # Create a new vehicle
-            for Npc in range(len(new_vehicles)):  # Iterate through the list of new vehicles
-                # If multiple vehicles being added they must be in different lanes
-                # and not collide with existing vehicles.
-                if new_vehicle.lane == new_vehicles[Npc].lane:
+        for v_cat in vehicle_categories:
+            new_vehicle = Vehicle(vehicle_type=v_cat)  # Create a new vehicle
+            for vehicle in new_vehicles:
+                if new_vehicle.lane == vehicle.lane:
                     break
             else:
-                for car in self.vehicles:
-                    if car.lane == new_vehicle.lane and (
-                            car.rect.x <= new_vehicle.rect.x <= car.rect.x + car.rect.width) or (
-                            car.rect.x <= new_vehicle.rect.x + new_vehicle.rect.width <= car.rect.x + car.rect.width):
+                if self.ordered_vehicles[new_vehicle.lane]:
+                    front_car = self.ordered_vehicles[new_vehicle.lane][-1]
+                    # todo Check if colliding with agent, it it exists
+                    collide = new_vehicle.rect.collidelist([front_car.rect])  # Check if the agent is colliding with the front vehicle
+                    if collide != -1:
                         break
-                else:
-                    new_vehicles.append(new_vehicle)  # Add the vehicle to the list of new vehicles
 
-        self.vehicles.extend(new_vehicles)  # Add the new vehicles to the vehicle list
+                self.ordered_vehicles[new_vehicle.lane].append(new_vehicle)
+
+        # for v_cat in vehicle_categories:
+        #     new_vehicle = Vehicle(vehicles=self.vehicles, vehicle_type=v_cat)  # Create a new vehicle
+        #     for i, _ in enumerate(new_vehicles):  # Iterate through the list of new vehicles
+        #         # If multiple vehicles being added they must be in different lanes
+        #         # and not collide with existing vehicles.
+        #         if new_vehicle.lane == new_vehicles[i].lane:
+        #             break
+        #     else:
+        #         for car in self.vehicles:
+        #             if car.lane == new_vehicle.lane and (
+        #                     car.rect.x <= new_vehicle.rect.x <= car.rect.x + car.rect.width) or (
+        #                     car.rect.x <= new_vehicle.rect.x + new_vehicle.rect.width <= car.rect.x + car.rect.width):
+        #                 break
+        #         else:
+        #             new_vehicles.append(new_vehicle)  # Add the vehicle to the list of new vehicles
+        #
+        # self.vehicles.extend(new_vehicles)  # Add the new vehicles to the vehicle list
 
     def lane_distribution(self):
         """Returns the number of vehicles in each lane."""
-        tracks = [vehicle.lane for vehicle in self.vehicles]
-        tracks_count = [tracks.count(track) for track in range(6)]
+        # tracks = [vehicle.lane for vehicle in self.vehicles]
+        # tracks_count = [tracks.count(track) for track in range(6)]
+
+        tracks_count = [len(cars) for cars in self.ordered_vehicles]
 
         return tracks_count
 
@@ -208,25 +234,36 @@ class TrafficManager:
 class Vehicle:
     """Car class for NPC vehicles"""
     scale = 10 / 3
+    # The probability of a vehicle spawning in the top three lanes.
+    # Accounts for bias of random.choice towards lanes 0,1,2 with higher values of traffic density
+    # lane_bias = 0.04 if TRAFFIC_DENSITY > 25 else -0.008 * TRAFFIC_DENSITY + 0.24
+    lane_bias = 0.5
 
-    def __init__(self):
-        # The probability of a vehicle spawning in the top three lanes.
-        # Accounts for bias of random.choice towards lanes 0,1,2 with higher values of traffic density
-        self.lane_bias = 0.04 if TRAFFIC_DENSITY > 25 else -0.008 * TRAFFIC_DENSITY + 0.24
+    def __init__(self, vehicles=None, vehicle_type: str = "car"):
+        if vehicles is None:
+            vehicles = []
+        match vehicle_type:
+            case "car":
+                # Geometric parameters and initial lane
+                self.width = random.normalvariate(2, 0.15) * self.scale  # Width of the vehicle (y-direction)
+                self.length = random.normalvariate(4.5, 0.2) * self.scale  # Length of the vehicle (x-direction)
+                # Choose a random lane for the vehicle
+                self.lane = random.choice([3, 4, 5]) if random.random() > self.lane_bias else random.choice([0, 1, 2])
+                self.driving_style = random.choices(population=["safe", "aggressive"], weights=[0.2, 0.8])[0]
+                self.colour = pygame.Color(0, 0, 255) if self.driving_style == "aggressive" else pygame.Color(0, 255, 0)
+            case "truck":
+                # Geometric parameters and initial lane
+                self.width = random.normalvariate(2.1, 0.1) * self.scale  # Width of the vehicle (y-direction)
+                self.length = random.normalvariate(16.0, 2) * self.scale  # For trucks
+                # Trucks won't spawn in the fast lane
+                self.lane = random.choice([4, 5]) if random.random() > self.lane_bias else random.choice([0, 1])
+                self.driving_style = "wide_load"
+                self.colour = pygame.Color(255, 0, 0)
 
-        # Geometric parameters and initial lane
-        self.width = random.normalvariate(2, 0.15) * self.scale  # Width of the vehicle (y-direction)
-        if self.width / self.scale > 2.15:  # For spawning trucks
-            self.length = random.normalvariate(16.0, 2) * self.scale  # For trucks
-            # Trucks won't spawn in the fast lane
-            self.lane = random.choice([4, 5]) if random.random() > self.lane_bias else random.choice([0, 1])
-        else:
-            self.length = random.normalvariate(4.5, 0.2) * self.scale  # Length of the vehicle (x-direction)
-            # Choose a random lane for the vehicle
-            self.lane = random.choice([3, 4, 5]) if random.random() > self.lane_bias else random.choice([0, 1, 2])
+        self.direction = 1 if self.lane > 2 else -1
 
         # Kinematic parameters
-        self.acceleration = 0  # The initial acceleration of the vehicle
+        self.acc = 0  # The initial acceleration of the vehicle
         self.x_velocity = LANE_VELOCITIES[self.lane]  # x velocity of the vehicle
         self.y_velocity = 0
 
@@ -235,17 +272,143 @@ class Vehicle:
         self.x_pos = 0 if self.lane > 2 else scene.WINDOW_WIDTH  # Set the start x position depending on travel direction
 
         # Assign the vehicle a random colour
-        self.colour = pygame.Color(int(random.random() * 255), int(random.random() * 255), int(random.random() * 255))
+        # self.colour = pygame.Color(int(random.random() * 255), int(random.random() * 255), int(random.random() * 255))
 
         self.rect = pygame.Rect(0, 0, self.length, self.width)  # Create the vehicle's rectangle object
         self.rect.center = (self.x_pos, self.y_pos)
 
+        # self.speed_control = idm(self.driving_style,
+        #                          LANE_VELOCITIES[self.lane] / 2.237)  # Initialise IDM controller for the vehicle
+        # self.speed_control.send(None)
+        # self.radar = Radar(self)
+        # self.vehicles = vehicles
+
     def update_position(self):
+        """
+        IDM control:
+        Vehicle data:
+        x_velocity
+        sensor.distances[0] (front car distance)
+        sensor.distances[1] (rear car distance)
+        max_acceleration = 3
+        max_velocity = LANE_VELOCITIES(self.lane) # Speed without traffic
+        """
+
+        # Need to find front car distance and velocity
+        # todo self.vehicles should include the agent vehicle, if it exists
+        # self.radar.observation(vehicles=self.vehicles)
+        # self.acc = self.speed_control.send(
+        #     [self.x_velocity, self.radar.distances[0 if self.direction else 1],
+        #      (self.radar.closest_cars[0 if self.direction else 1].x_velocity
+        #       if self.radar.closest_cars[0] else LANE_VELOCITIES[self.lane])])
+
         # increment position values: s = ut + 0.5at^2
-        self.x_pos += self.x_velocity * 1 / FPS
+        self.x_velocity += 0  # self.acc * (1 / FPS)
+
+        self.x_pos += (self.x_velocity * 1 / FPS)
         self.y_pos += self.y_velocity * 1 / FPS
         self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the vehicle rectangle
 
+    def get_leading_vehicle(self):
+        pass
+
+
+# class Car(Vehicle):
+#     def __init__(self):
+#         super().__init__()
+#         # Geometric parameters and initial lane
+#         self.width = random.normalvariate(2, 0.15) * self.scale  # Width of the vehicle (y-direction)
+#         self.length = random.normalvariate(4.5, 0.2) * self.scale  # Length of the vehicle (x-direction)
+#         # Choose a random lane for the vehicle
+#         self.lane = random.choice([3, 4, 5]) if random.random() > self.lane_bias else random.choice([0, 1, 2])
+#
+#         # Kinematic parameters
+#         self.acc = 0  # The initial acceleration of the vehicle
+#         self.x_velocity = LANE_VELOCITIES[self.lane]  # x velocity of the vehicle
+#         self.y_velocity = 0
+#
+#         # Set spawn location
+#         self.y_pos = LANES[self.lane]  # The y-position of the vehicle's lane
+#         self.x_pos = 0 if self.lane > 2 else scene.WINDOW_WIDTH  # Set the start x position depending on travel direction
+#
+#         # Assign the vehicle a random colour
+#         self.colour = pygame.Color(int(random.random() * 255), int(random.random() * 255), int(random.random() * 255))
+#
+#         self.rect = pygame.Rect(0, 0, self.length, self.width)  # Create the vehicle's rectangle object
+#         self.rect.center = (self.x_pos, self.y_pos)
+#
+#         self.driving_style = random.choice(["granny", "yobbo"])
+#         self.speed_control = idm(self.driving_style, LANE_VELOCITIES[self.lane])
+#
+#     def update_position(self):
+#         """
+#         IDM control:
+#         Vehicle data:
+#         x_velocity
+#         sensor.distances[0] (front car distance)
+#         sensor.distances[1] (rear car distance)
+#         max_acceleration = 3
+#         max_velocity = LANE_VELOCITIES(self.lane) # Speed without traffic
+#         """
+#
+#         # Need to find front car distance and velocity
+#         self.acc = self.speed_control.send(self.x_velocity, front_car_distance, front_car_velocity)
+#
+#         # increment position values: s = ut + 0.5at^2
+#         self.x_velocity += self.acc * 1 / FPS
+#
+#         self.x_pos += self.x_velocity * 1 / FPS + 0.5 * self.acc ** 2
+#         self.y_pos += self.y_velocity * 1 / FPS
+#         self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the vehicle rectangle
+
+
+# class Truck(Vehicle):
+#     def __init__(self):
+#         super().__init__()
+#         # Geometric parameters and initial lane
+#         self.width = random.normalvariate(2.1, 0.1) * self.scale  # Width of the vehicle (y-direction)
+#         self.length = random.normalvariate(16.0, 2) * self.scale  # For trucks
+#         # Trucks won't spawn in the fast lane
+#         self.lane = random.choice([4, 5]) if random.random() > self.lane_bias else random.choice([0, 1])
+#
+#         # Kinematic parameters
+#         self.acc = 0  # The initial acceleration of the vehicle
+#         self.x_velocity = LANE_VELOCITIES[self.lane]  # x velocity of the vehicle
+#         self.y_velocity = 0
+#
+#         # Set spawn location
+#         self.y_pos = LANES[self.lane]  # The y-position of the vehicle's lane
+#         self.x_pos = 0 if self.lane > 2 else scene.WINDOW_WIDTH  # Set the start x position depending on travel direction
+#
+#         # Assign the vehicle a random colour
+#         self.colour = pygame.Color(int(random.random() * 255), int(random.random() * 255), int(random.random() * 255))
+#
+#         self.rect = pygame.Rect(0, 0, self.length, self.width)  # Create the vehicle's rectangle object
+#         self.rect.center = (self.x_pos, self.y_pos)
+#
+#         self.driving_style = "truck_driver"
+#         self.speed_control = idm(self.driving_style)
+#
+#     def update_position(self):
+#         """
+#         IDM control:
+#         Vehicle data:
+#         x_velocity
+#         sensor.distances[0] (front car distance)
+#         sensor.distances[1] (rear car distance)
+#         max_acceleration = 3
+#         max_velocity = LANE_VELOCITIES(self.lane) # Speed without traffic
+#         """
+#
+#         # Need to find front car distance and velocity
+#         self.acc = self.speed_control.send(self.x_velocity, front_car_distance, front_car_velocity)
+#
+#         # increment position values: s = ut + 0.5at^2
+#         self.x_velocity += self.acc * 1 / FPS
+#
+#         self.x_pos += self.x_velocity * 1 / FPS + 0.5 * self.acc ** 2
+#         self.y_pos += self.y_velocity * 1 / FPS
+#         self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the vehicle rectangle
 
 class RepeatedTimer:
     def __init__(self, interval, function, *args, **kwargs):
@@ -374,13 +537,15 @@ class Agent:
                 increment agent.velocity_x
                 Keep controller action and max velocity bounded"""
         # self.x_velocity += self.pid.send() * 2.237  # Update agent velocity in mph/s
-        self.x_velocity += self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
+        acc = self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
+        self.x_velocity += acc
+        # self.x_velocity += self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
 
         # Ensure agent velocity is within acceptable range
-        if self.max_speed <= self.x_velocity:
-            self.x_velocity, acc = self.max_speed, 0
-        elif self.min_speed >= self.x_velocity:
-            self.x_velocity, acc = self.min_speed, 0
+        # if self.max_speed <= self.x_velocity:
+        #     self.x_velocity, acc = self.max_speed, 0
+        # elif self.min_speed >= self.x_velocity:
+        #     self.x_velocity, acc = self.min_speed, 0
 
         # Behaviour decision-making # todo Easily switch between FSM and BT
         # Increment the agent.lane when we change to a new lane
@@ -408,7 +573,8 @@ class Agent:
         while not self.return_queue.empty():
             self.path = self.return_queue.get()
 
-        self.x_pos += self.x_velocity * 1 / FPS  # Increment agent position
+        # self.x_pos += self.x_velocity * 1 / FPS  # Increment agent position
+        self.x_pos += (self.x_velocity * 1 / FPS) + 0.5 * acc * (1 / FPS) ** 2  # Increment agent position
         if self.path:
             try:
                 self.y_pos = self.path[ceil(self.x_pos)]  # Update agent y-position
@@ -487,7 +653,8 @@ class Collision:
         self.agent = agent
 
     def observation(self, vehicles):
-        car_list = [vehicle.rect for vehicle in vehicles] if vehicles else []  # Get list of rect objects
+        # car_list = [vehicle.rect for vehicle in vehicles] if vehicles else []  # Get list of rect objects
+        car_list = [vehicle.rect for lane in vehicles for vehicle in lane] if vehicles else []  # Get list of rects
         collide = self.agent.rect.collidelist(car_list)  # Check if the agent is colliding with any vehicles
 
         # If the car from the car list is colliding with the agent
@@ -514,7 +681,7 @@ class Radar:
         self.closest_cars = [None for _ in range(6)]
         self.distances = [None for _ in range(6)]
 
-    def observation(self, vehicles: [Vehicle]) -> [[Vehicle], [int]]:
+    def observation(self, vehicles: [[Vehicle]]) -> [[Vehicle], [int]]:
         """x = lane - self.agent.lane
                 f(-1) = 2, f(0) = 0, f(1) = 4
                 f(x) = 3 * x**2 + x
@@ -527,10 +694,10 @@ class Radar:
             return 3 * x ** 2 + x
 
         def cond(v):
-            return index(v.lane - self.agent.lane) if v.x_pos > self.agent.x_pos else index(
-                v.lane - self.agent.lane) + 1
+            return index(v.lane - self.agent.lane) if v.x_pos > self.agent.x_pos else index(v.lane - self.agent.lane) + 1
 
-        vehicles and [car_lists[cond(v)].append(v) for v in vehicles if abs(v.lane - self.agent.lane) <= 1]
+        # vehicles and [car_lists[cond(v)].append(v) for v in vehicles if abs(v.lane - self.agent.lane) <= 1]
+        [car_lists[cond(v)].append(v) for lane in vehicles for v in lane if lane and abs(v.lane - self.agent.lane) <= 1]
 
         # Get the closest vehicle in each lane
         """Iterate through each lane in car_lists
@@ -548,7 +715,7 @@ class Radar:
 
         for i, lane_direction in enumerate(car_lists):
             for vehicle in lane_direction:
-                if rel_distance(vehicle) < self.distances[i]:
+                if rel_distance(vehicle) < self.distances[i] and rel_distance(vehicle) != self.agent.rect.width:
                     self.distances[i] = rel_distance(vehicle)
                     self.closest_cars[i] = vehicle
 
