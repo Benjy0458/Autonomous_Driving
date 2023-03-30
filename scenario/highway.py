@@ -28,9 +28,9 @@ LANES = {
 
 # The velocity corresponding to each lane (mph)
 LANE_VELOCITIES = {
-    0: -50,
-    1: -60,
-    2: -70,
+    0: 50,
+    1: 60,
+    2: 70,
     3: 70,
     4: 60,
     5: 50,
