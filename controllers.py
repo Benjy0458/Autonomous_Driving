@@ -61,32 +61,6 @@ class PID:
             e_prev = e  # Update stored data for next iteration
 
 
-# class IDM:
-#     def __init__(self, agent):
-#         self.agent = agent
-#         self.sensor = agent.sensor.radar
-#         self.minimum_spacing = 3
-#         self.time_headway = 1
-#         self.max_acceleration = self.agent.acceleration  # Max acceleration of the agent
-#         self.max_velocity = self.agent.max_speed  # Speed agent would drive at without traffic
-#         self.delta = 4  # Acceleration exponent
-#         self.speed_control = self.control()
-#         self.speed_control.send(None)
-#
-#     def control(self):
-#         acc = None
-#         while True:
-#             yield acc
-#             s_star = self.minimum_spacing + self.agent.x_velocity * self.time_headway
-#             # If the desired follow distance is greater than the gap between front/behind vehicle
-#             if s_star > self.sensor.distances[0] + self.sensor.distances[1]:
-#                 s_star = 0.5 * (self.sensor.distances[0] + self.sensor.distances[1])
-#             try:
-#                 acc = self.max_acceleration * (1 - (self.agent.x_velocity / self.max_velocity) ** self.delta - (s_star / self.sensor.distances[0]) ** 2)
-#             except ZeroDivisionError:
-#                 logger.debug(f'{self.__class__.__name__}: IDM: Zero division attempted. Looks like there was an accident')
-
-
 class IDM:
     """
     time_headway: Desired time to front vehicle
@@ -96,21 +70,21 @@ class IDM:
     driving_styles = {
         "safe": {
             # 'desired_velocity': desired_velocity,  # lane velocity
-            'time_headway': 1,  # 0.8 - 2 s
-            'acceleration': 3,  # 0.8 - 2.5 m/s^2
-            'deceleration': 9.81,  # ~2 m/s^2
+            'time_headway': 1.5,  # 0.8 - 2 s
+            'acceleration': 2,  # 0.8 - 2.5 m/s^2
+            'deceleration': 3,  # ~2 m/s^2
         },
         "aggressive": {
             # 'desired_velocity': desired_velocity,  # lane velocity
-            'time_headway': 0.1,  # 0.8 - 2 s
+            'time_headway': 1,  # 0.8 - 2 s
             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-            'deceleration': 9.81,  # ~2 m/s^2
+            'deceleration': 4,  # ~2 m/s^2
         },
         "wide_load": {
             # 'desired_velocity': desired_velocity,  # lane velocity
-            'time_headway': 1,  # 0.8 - 2 s
-            'acceleration': 3,  # 0.8 - 2.5 m/s^2
-            'deceleration': 9.81,  # ~2 m/s^2
+            'time_headway': 1.7,  # 0.8 - 2 s
+            'acceleration': 1.5,  # 0.8 - 2.5 m/s^2
+            'deceleration': 2,  # ~2 m/s^2
         },
     }
     delta = 4  # Acceleration exponent
@@ -138,97 +112,6 @@ class IDM:
                 braking_term = (s_star / front_car_distance) ** 2
             except ZeroDivisionError:
                 braking_term = 0
+                logger.debug("Encountered ZeroDivisionError - looks like a car crashed.")
 
             acc = self.style['acceleration'] * (desired_acceleration - braking_term)
-
-
-# def idm(driving_style: str, desired_velocity: float):
-#     driving_styles = {
-#         "safe": {
-#             'desired_velocity': desired_velocity,  # lane velocity
-#             'time_headway': 1,  # 0.8 - 2 s
-#             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-#             'deceleration': 9.81,  # ~2 m/s^2
-#         },
-#         "aggressive": {
-#             'desired_velocity': desired_velocity,  # lane velocity
-#             'time_headway': 1,  # 0.8 - 2 s
-#             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-#             'deceleration': 9.81,  # ~2 m/s^2
-#         },
-#         "wide_load": {
-#             'desired_velocity': desired_velocity,  # lane velocity
-#             'time_headway': 1,  # 0.8 - 2 s
-#             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-#             'deceleration': 9.81,  # ~2 m/s^2
-#         },
-#     }
-#     style = driving_styles[driving_style]
-#     desired_velocity = style['desired_velocity']  # The velocity the vehicle would drive at in free traffic
-#     minimum_spacing = 3  # Car can't move if distance to the car in front is less than this
-#     time_headway = style['desired_velocity']  # The minimum possible time to the vehicle in front
-#     a = style['acceleration']  # The max vehicle acceleration
-#     b = style['deceleration']  # The max vehicle deceleration
-#     delta = 4  # Acceleration exponent
-#     acc = 0  # Initial control
-#     while True:
-#         velocity_x, front_car_distance, front_car_velocity = yield acc
-#         # Desired dynamical distance
-#         s_star = minimum_spacing + max(0, velocity_x * time_headway +
-#                                        (velocity_x * (velocity_x - front_car_velocity) / (2 * sqrt(a * b))))
-#         desired_acceleration = (1 - (velocity_x / desired_velocity) ** delta)  # Desired acceleration on a free road
-#
-#         try:
-#             braking_term = (s_star / front_car_distance) ** 2
-#         except ZeroDivisionError:
-#             braking_term = 0
-#
-#         acc = a * (desired_acceleration - braking_term)
-#
-#
-# def idm(driving_style: str, lane_velocity: float):
-#     driving_styles = {
-#         "safe": {
-#             'desired_velocity': lane_velocity,  # lane velocity
-#             'time_headway': 1,  # 0.8 - 2 s
-#             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-#             'deceleration': 9.81,  # ~2 m/s^2
-#         },
-#         "aggressive": {
-#             'desired_velocity': lane_velocity,  # lane velocity
-#             'time_headway': 1,  # 0.8 - 2 s
-#             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-#             'deceleration': 9.81,  # ~2 m/s^2
-#         },
-#         "wide_load": {
-#             'desired_velocity': lane_velocity,  # lane velocity
-#             'time_headway': 1,  # 0.8 - 2 s
-#             'acceleration': 3,  # 0.8 - 2.5 m/s^2
-#             'deceleration': 9.81,  # ~2 m/s^2
-#         },
-#     }
-#     style = driving_styles[driving_style]
-#     desired_velocity = style['desired_velocity']  # The velocity the vehicle would drive at in free traffic
-#     minimum_spacing = 3  # Car can't move if distance to the car in front is less than this
-#     time_headway = style['desired_velocity']  # The minimum possible time to the vehicle in front
-#     a = style['acceleration']  # The max vehicle acceleration
-#     b = style['deceleration']  # The max vehicle deceleration
-#     delta = 4  # Acceleration exponent
-#     acc = 0  # Initial control
-#     while True:
-#         x_velocity, front_car_distance, front_car_velocity = yield acc
-#         # Desired dynamical distance
-#         s_star = minimum_spacing + x_velocity * time_headway
-#         try:
-#             acc = a * (1 - (x_velocity / desired_velocity) ** delta - (s_star / front_car_distance) ** 2)
-#         except ZeroDivisionError:
-#             pass
-#
-#         # desired_acceleration = (1 - (velocity_x / desired_velocity) ** delta)  # Desired acceleration on a free road
-#         #
-#         # try:
-#         #     braking_term = (s_star / front_car_distance) ** 2
-#         # except ZeroDivisionError:
-#         #     braking_term = 0
-#         #
-#         # acc = a * (desired_acceleration - braking_term)

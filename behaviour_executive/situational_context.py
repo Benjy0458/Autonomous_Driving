@@ -1,5 +1,7 @@
 """A module containing helper functions for the condition behaviours in the behaviour tree."""
 
+# todo Modify conditions to use time_headway
+
 
 def slow_vehicle(agent: isinstance) -> bool:
     return agent.front_car_velocity < agent.max_speed - 5
