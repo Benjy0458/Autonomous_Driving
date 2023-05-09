@@ -11,10 +11,12 @@ from behaviour_executive import finite_state_machine as fsm
 from behaviour_executive import behaviour_tree as bt
 from path_planner.hybrid_astar import HybridAstar
 from path_planner.normal_astar import Astar
+from utils import RepeatedTimer
+
 from multiprocessing import Process, Queue
 from scipy import interpolate as itp
 import numpy as np
-from math import ceil
+from math import ceil, sin, pi
 
 from controllers import PID, IDM
 
@@ -39,9 +41,10 @@ FPS /= TIME_GAIN
 
 TRAFFIC_DENSITY = 2  # Density of NPC vehicles in the simulation
 
-# =============================
+
+# =================================
 # Classes
-# =============================
+# =================================
 
 
 class World:
@@ -49,12 +52,9 @@ class World:
 
     def __init__(self):
         self.display_surface = World.init_pygame()  # Open a new named Pygame window
-        image = pygame.image.load(r'highway.jpg').convert()
+        image = pygame.image.load(rf'{scene.BACKGROUND_IMAGE}').convert()
         self.image = pygame.transform.scale(image,
                                             (scene.WINDOW_WIDTH, scene.WINDOW_HEIGHT))  # Scale the background image
-        # image = pygame.image.load(r'Roundabout2.jpg').convert()
-        # self.image = pygame.transform.scale(image,
-        #                                     (scene.WINDOW_WIDTH, scene.WINDOW_HEIGHT))  # Scale the background image
 
         self.display_surface.blit(self.image, (0, 0))  # Fill the pygame window with highway image
 
@@ -78,8 +78,15 @@ class World:
                 for event in pygame.event.get():  # Decide whether to terminate the simulation
                     if event.type == pygame.QUIT:
                         running = False
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_p:
+                            pygame.image.save(self.display_surface, f"{time.time()}.jpeg")
 
                 elapsed_time = time.time() - self.start_time  # Calculate elapsed time
+                global TRAFFIC_DENSITY
+                # TRAFFIC_DENSITY = 5 * sin(0.1 * elapsed_time) + 5
+                # TRAFFIC_DENSITY = 10 * sin(0.1 * elapsed_time) ** 0.5
+                TRAFFIC_DENSITY = -sin(0.2 * elapsed_time + 0.5 * pi) + 2 * sin(0.05 * elapsed_time - 0.5 * pi) + 3
 
                 self.TM and self.update_vehicles()  # Update NPC vehicles
                 self.agent and self.update_agent()  # Update and draw the agent
@@ -89,6 +96,7 @@ class World:
                 self.caption(elapsed_time, clock)  # Update the window caption
 
                 clock.tick_busy_loop(FPS * TIME_GAIN)  # Ensure program maintains desired frame rate
+                # todo Plot live agent data: Velocity, Acceleration, Lane(t) or y_pos
         finally:
             if self.TM:
                 self.TM.timed_spawn.stop()  # Stop the spawn vehicles thread
@@ -104,7 +112,8 @@ class World:
     def caption(self, elapsed_time: float, clock: pygame.time.Clock) -> None:
         tracks_count = self.TM.lane_distribution() if self.TM else 0
         cap = []
-        sim_cap = f"Elapsed time: {round(elapsed_time)}, FPS: {round(clock.get_fps())}"
+        sim_cap = f"Elapsed time: {round(elapsed_time)}, FPS: {round(clock.get_fps())}, " \
+                  f"Traffic density: {round(TRAFFIC_DENSITY, 1)}"
         cap.append(sim_cap)
         if self.TM:
             tm_cap = f"Num Vehicles: {sum(tracks_count)}, Lane dist: {tracks_count}"
@@ -132,20 +141,21 @@ class World:
 
     def draw_window(self) -> None:
         def draw_radar(horizontal: bool = False) -> None:
-            [pygame.draw.line(self.display_surface, (255, 0, 0),
-                              (self.agent.x_pos, LANES[car.lane] if horizontal else self.agent.y_pos),
-                              (car.x_pos, LANES[car.lane]))
+            [pygame.draw.aaline(self.display_surface, (255, 0, 0),
+                                (self.agent.x_pos, LANES[car.lane] if horizontal else self.agent.y_pos),
+                                (car.x_pos, LANES[car.lane]))
              for car in self.agent.sensor.radar.closest_cars if car and car.lane > 2]
 
         self.display_surface.blit(self.image, (0, 0))  # Fill the pygame window with the background image
-        self.agent and draw_radar(horizontal=True)
+        self.agent and draw_radar(horizontal=False)
         # Draw traffic
         # self.TM and [pygame.draw.rect(self.display_surface, car.colour, car.rect) for car in self.TM.vehicles]
-        self.TM and [pygame.draw.rect(self.display_surface, car.colour, car.rect) for lane in self.TM.ordered_vehicles for car in lane]
+        self.TM and [pygame.draw.rect(self.display_surface, car.colour, car.rect) for lane in self.TM.ordered_vehicles
+                     for car in lane]
         if self.agent:
             # Draw path
-            (len(self.agent.path) > 1 and pygame.draw.lines(self.display_surface, (250, 0, 250),
-                                                            False, list(self.agent.path.items())))
+            (len(self.agent.path) > 1 and pygame.draw.aalines(self.display_surface, (250, 0, 250),
+                                                              False, list(self.agent.path.items())))
             pygame.draw.rect(self.display_surface, self.agent.colour, self.agent.rect)  # Draw agent
             # Draw deadzone, collisions detected before this line are not counted
             pygame.draw.line(self.display_surface, (0, 255, 255),
@@ -170,6 +180,7 @@ class World:
 
 class TrafficManager:
     """A class that handles the behaviour of NPC vehicles in the simulation"""
+
     def __init__(self):
         self.vehicles = []  # Keeps track of the vehicles currently in the window
         self.ordered_vehicles = [[], [], [], [], [], []]
@@ -237,7 +248,8 @@ class Vehicle:
 
         # Kinematic parameters
         self.acc = 0  # The initial acceleration of the vehicle
-        self.max_velocity = 1.1 * LANE_VELOCITIES[self.lane] if self.driving_style == "aggressive" else LANE_VELOCITIES[self.lane]
+        self.max_velocity = 1.1 * LANE_VELOCITIES[self.lane] if self.driving_style == "aggressive" else LANE_VELOCITIES[
+            self.lane]
         self.x_velocity = LANE_VELOCITIES[self.lane]  # x velocity of the vehicle
         self.y_velocity = 0
 
@@ -276,10 +288,13 @@ class Vehicle:
                 acc = self.speed_controller.speed_control.send([self.x_velocity, agent_car_distance,
                                                                 world.agent.x_velocity]) * 2.237  # Update agent velocity in mph/s
         elif self.front_car and scene.WINDOW_WIDTH > self.front_car.x_pos > 0:
-            front_car_distance = self.direction * (self.front_car.x_pos - self.x_pos) - 0.5 * (self.length + self.front_car.length)
-            acc = self.speed_controller.speed_control.send([self.x_velocity, front_car_distance, self.front_car.x_velocity]) * 2.237  # Update agent velocity in mph/s
+            front_car_distance = self.direction * (self.front_car.x_pos - self.x_pos) - 0.5 * (
+                    self.length + self.front_car.length)
+            acc = self.speed_controller.speed_control.send([self.x_velocity, front_car_distance,
+                                                            self.front_car.x_velocity]) * 2.237  # Update agent velocity in mph/s
         else:
-            acc = self.speed_controller.speed_control.send([self.x_velocity, 1000, LANE_VELOCITIES[self.lane]]) * 2.237  # Update agent velocity in mph/s
+            acc = self.speed_controller.speed_control.send(
+                [self.x_velocity, 1000, LANE_VELOCITIES[self.lane]]) * 2.237  # Update agent velocity in mph/s
 
         # todo https://github.com/movsim/traffic-simulation-de
         self.x_velocity += acc * (1 / FPS)
@@ -289,32 +304,32 @@ class Vehicle:
         self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the vehicle rectangle
 
 
-class RepeatedTimer:
-    def __init__(self, interval, function, *args, **kwargs):
-        self._timer = None
-        self.interval = interval
-        self.function = function
-        self.args = args
-        self.kwargs = kwargs
-        self.is_running = False
-        self.next_call = time.time()
-        # self.start()
-
-    def _run(self):
-        self.is_running = False
-        self.start()
-        self.function(*self.args, **self.kwargs)
-
-    def start(self):
-        if not self.is_running:
-            self.next_call += self.interval
-            self._timer = threading.Timer(self.next_call - time.time(), self._run)
-            self._timer.start()
-            self.is_running = True
-
-    def stop(self):
-        self._timer.cancel()
-        self.is_running = False
+# class RepeatedTimer:
+#     def __init__(self, interval, function, *args, **kwargs):
+#         self._timer = None
+#         self.interval = interval
+#         self.function = function
+#         self.args = args
+#         self.kwargs = kwargs
+#         self.is_running = False
+#         self.next_call = time.time()
+#         # self.start()
+#
+#     def _run(self):
+#         self.is_running = False
+#         self.start()
+#         self.function(*self.args, **self.kwargs)
+#
+#     def start(self):
+#         if not self.is_running:
+#             self.next_call += self.interval
+#             self._timer = threading.Timer(self.next_call - time.time(), self._run)
+#             self._timer.start()
+#             self.is_running = True
+#
+#     def stop(self):
+#         self._timer.cancel()
+#         self.is_running = False
 
 
 class Agent:
@@ -346,8 +361,9 @@ class Agent:
         self.bt_agent_data = self.BtData(self)
         self.bt_tick = Process(target=bt.setup, args=(self.bt_send, self.bt_return, bt.highway_drive))
 
-        self.pid = PID(self)  # Initialise PID controller
-        self.speed_controller = speed_controller(driving_style="safe", desired_velocity=self.max_speed)  # Initialise speed controller
+        # self.pid = PID(self)  # Initialise PID controller
+        self.speed_controller = speed_controller(driving_style="safe",
+                                                 desired_velocity=self.max_speed)  # Initialise speed controller
 
         # Initialise the path planner
         self.send_queue, self.return_queue = Queue(), Queue()  # Queue objects to send/receive data from path planner
@@ -364,7 +380,6 @@ class Agent:
         def initialise(self, agent) -> None:
             """Resets the data for the BT."""
             self.goal_pos = agent.goal_pos
-            # self.goal_pos2 = self.goal_pos
             self.x_velocity = agent.x_velocity
             self.max_speed = agent.max_speed
             self.length = agent.length
@@ -404,7 +419,7 @@ class Agent:
         self.y_pos = LANES[self.lane]
         self.x_velocity = LANE_VELOCITIES[self.lane]
         self.goal_pos = [self.x_pos + 40, self.y_pos]  # Goal position for the path planner
-        # self.goal_pos2 = self.goal_pos
+        self.prev_goal_pos = [self.x_pos, self.y_pos]
         self.path = {}
 
     def update_position(self, vehicles):
@@ -418,23 +433,25 @@ class Agent:
         # self.x_velocity += self.pid.send() * 2.237  # Update agent velocity in mph/s
         # acc = self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
         if self.sensor.radar.closest_cars[0]:
-            acc = self.speed_controller.speed_control.send([self.x_velocity, self.sensor.radar.distances[0], self.sensor.radar.closest_cars[0].x_velocity]) * 2.237  # Update agent velocity in mph/s
+            acc = self.speed_controller.speed_control.send([self.x_velocity, self.sensor.radar.distances[0],
+                                                            self.sensor.radar.closest_cars[
+                                                                0].x_velocity]) * 2.237  # Update agent velocity in mph/s
         else:
-            acc = self.speed_controller.speed_control.send([self.x_velocity, 1000, self.max_speed]) * 2.237  # Update agent velocity in mph/s
+            acc = self.speed_controller.speed_control.send(
+                [self.x_velocity, 1000, self.max_speed]) * 2.237  # Get new acc in mph/s
 
         self.x_velocity += acc * (1 / FPS)
-        # self.x_velocity += self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
-
-        # Ensure agent velocity is within acceptable range
-        # if self.max_speed <= self.x_velocity:
-        #     self.x_velocity, acc = self.max_speed, 0
-        # elif self.min_speed >= self.x_velocity:
-        #     self.x_velocity, acc = self.min_speed, 0
 
         # Behaviour decision-making # todo Easily switch between FSM and BT
         # Increment the agent.lane when we change to a new lane
+        # if self.goal_pos[1] != LANES[self.lane]:
+        #     self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
+
+        # old -----------
         if abs(self.y_pos - self.goal_pos[1]) < 4:
             self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
+        # -------------
+
         # Finite state machine
         # self.goal_pos = self.fsm.on_event()  # Update behavioural planner # todo Fix the finite state machine
 
@@ -444,7 +461,6 @@ class Agent:
         self.bt_agent_data.initialise(self)  # Update agent data to send to the BT
         self.bt_send.put(self.bt_agent_data)  # Send latest agent data to the queue
         while not self.bt_return.empty():
-            # _ = self.bt_return.get()  # Must empty the queue into a throwaway variable so while loop finishes
             self.goal_pos = self.bt_return.get()  # Get new goal position from the BT
         # ---
 
@@ -453,12 +469,35 @@ class Agent:
         # todo If the y-value of the goal position hasn't changed, the start position of the path search
         #      should be the previous goal position. Then append the new path to the current path.
         #      self.lane should change immediately now that traffic uses IDM.
+        # New ---------------------
+        # Problem: new path is not necessarily calculated the same iteration. May be out of date.
+        # if self.prev_goal_pos[1] == self.goal_pos[1]:
+        #     self.send_queue.put(((self.prev_goal_pos[0], self.prev_goal_pos[1], 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
+        #     # Retrieve path from the path planner
+        #     new_path = None
+        #     while not self.return_queue.empty():
+        #         new_path = self.return_queue.get()
+        #     if new_path:
+        #         self.path |= new_path
+        #         # print(self.path.items())
+        # else:
+        #     self.send_queue.put(((self.x_pos, self.y_pos, 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
+        #     # Retrieve path from the path planner
+        #     while not self.return_queue.empty():
+        #         self.path = self.return_queue.get()
+        #
+        # self.prev_goal_pos = self.goal_pos
+        # print(self.path.items())
+
+        # -------------------
+
+        # Original --------------
         self.send_queue.put(((self.x_pos, self.y_pos, 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
         # Retrieve path from the path planner
         while not self.return_queue.empty():
             self.path = self.return_queue.get()
+        # -------------------------------
 
-        # self.x_pos += self.x_velocity * 1 / FPS  # Increment agent position
         self.x_pos += (self.x_velocity * 1 / FPS) + 0.5 * acc * (1 / FPS) ** 2  # Increment agent position
         if self.path:
             try:
@@ -469,25 +508,6 @@ class Agent:
 
         self.path = {k: v for k, v in self.path.items() if k >= self.x_pos}
         self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the agent center
-        """Decision module
-        FSM
-        Observe surrounding vehicles
-        Transition states
-        Execute appropriate action
-        """
-        """list of rect objects and list of velocities for all vehicles in simulation
-        Check if colliding with anything (Collision sensor)
-        
-        Radar detection
-        
-        Decision module -> returns goal position
-        
-        Path planner (A* / Hybrid A*)
-        
-        Motion planner (controllers PID/IDM)
-        
-        
-        """
 
     def change_lane(self, direction):
         """Change the lane of the agent car."""
@@ -579,10 +599,12 @@ class Radar:
             return 3 * x ** 2 + x
 
         def cond(v):
-            return index(v.lane - self.agent.lane) if v.x_pos > self.agent.x_pos else index(v.lane - self.agent.lane) + 1
+            return index(v.lane - self.agent.lane) if v.x_pos > self.agent.x_pos else index(
+                v.lane - self.agent.lane) + 1
 
         # vehicles and [car_lists[cond(v)].append(v) for v in vehicles if abs(v.lane - self.agent.lane) <= 1]
-        vehicles and [car_lists[cond(v)].append(v) for lane in vehicles for v in lane if lane and abs(v.lane - self.agent.lane) <= 1]
+        vehicles and [car_lists[cond(v)].append(v) for lane in vehicles for v in lane if
+                      lane and abs(v.lane - self.agent.lane) <= 1]
 
         # Get the closest vehicle in each lane
         """Iterate through each lane in car_lists
@@ -608,6 +630,21 @@ class Radar:
 
     def draw(self, surface):
         pass
+
+
+# =================================
+# Functions
+# =================================
+
+def main():
+    world = World()  # Create the Pygame simulation environment
+    world.TM = TrafficManager()  # Add traffic to the simulation
+    world.agent = Agent(path_planner=HybridAstar)  # Add the agent vehicle to the simulation
+    # Live graph
+    try:
+        world.game_loop()
+    finally:
+        pygame.quit()
 
 
 if __name__ == "__main__":

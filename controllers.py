@@ -1,4 +1,6 @@
 from math import sqrt
+from control import lqr
+import numpy as np
 
 from scenario.highway import FPS
 
@@ -62,7 +64,7 @@ class PID:
 
 
 class IDM:
-    """
+    """A class that implements the Intelligent Driver Model for automated cruise control of a vehicle.
     time_headway: Desired time to front vehicle
     acceleration: Max acceleration
     deceleration: comfortable deceleration
@@ -106,12 +108,37 @@ class IDM:
             s_star = self.minimum_spacing + max(0, velocity_x * self.style['time_headway'] +
                                                 (velocity_x * (velocity_x - front_car_velocity) / (2 * self.sqrtab)))
             # Desired acceleration on a free road
-            desired_acceleration = (1 - (velocity_x / self.desired_velocity) ** self.delta)
+            try:
+                desired_acceleration = (1 - (velocity_x / self.desired_velocity) ** self.delta)
+            except OverflowError:
+                desired_acceleration = 0
+                logging.warning(f"Encountered OverflowError calculating: "
+                                f"1 - ({velocity_x} / {self.desired_velocity}) ** {self.delta}")
 
             try:
                 braking_term = (s_star / front_car_distance) ** 2
             except ZeroDivisionError:
                 braking_term = 0
-                logger.debug("Encountered ZeroDivisionError - looks like a car crashed.")
+                logger.debug(f"Encountered ZeroDivisionError calculating: "
+                             f"braking_term = ({s_star} / {front_car_distance}) ** 2")
 
             acc = self.style['acceleration'] * (desired_acceleration - braking_term)
+
+
+class OptimalControl:
+    """A class that implements the optimal control algorithm for vehicle trajectory tracking."""
+    def __init__(self, length):
+        self.length = length
+        self.Q = np.eye(2)
+        self.R = np.eye(1)
+        self.trajectory_control = self.control()
+        self.trajectory_control.send(None)
+
+    def control(self):
+        K, P, E = 0, 0, 0
+        while True:
+            V = yield K, P, E
+
+            A = np.array([[0, V], [0, 0]])
+            B = -np.array([[V], [V/self.length]])
+            K, P, E = lqr(A, B, self.Q, self.R)
