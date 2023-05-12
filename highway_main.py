@@ -39,7 +39,7 @@ logger.addHandler(file_handler)  # Add file handler to the logger
 # =================================
 # Global variables
 # =================================
-TIME_GAIN = 1  # Speed up the simulation # todo Doesn't affect path planner or BT subprocesses
+TIME_GAIN = 1  # Speed up the simulation - Doesn't affect path planner or BT subprocesses
 FPS /= TIME_GAIN
 
 TRAFFIC_DENSITY = 2  # Density of NPC vehicles in the simulation
@@ -315,7 +315,6 @@ class Vehicle:
             acc = self.speed_controller.speed_control.send(
                 [self.x_velocity, 1000, LANE_VELOCITIES[self.lane]]) * 2.237  # Update agent velocity in mph/s
 
-        # todo https://github.com/movsim/traffic-simulation-de
         self.x_velocity += acc * (1 / FPS)
 
         self.x_pos += ((self.x_velocity * 1 / FPS) + 0.5 * acc * (1 / FPS) ** 2) * self.direction  # Increment position
@@ -350,13 +349,12 @@ class Agent:
         # Initialise behaviour tree
         self.bt_send, self.bt_return = Queue(), Queue()  # Queue objects to send/receive data from the BT
         self.bt_agent_data = self.BtData(self)
-        # self.bt_tick = Process(target=bt.setup, args=(self.bt_send, self.bt_return, bt.highway_drive))
         self.bt_tick = Process(target=bt.setup, args=(self.bt_send, self.bt_return, bt.highway_drive))
 
         self.speed_controller = speed_controller(driving_style="safe",
                                                  desired_velocity=self.max_speed)  # Initialise speed controller
 
-        # Initialise trajectory planner
+        # Initialise trajectory tracker
         self.lateral_controller = OptimalControl(self.length)
 
         # Initialise the path planner
@@ -426,230 +424,127 @@ class Agent:
         self.path = {}
 
     def update_position(self, vehicles):
-        self.sensor.collision.observation(vehicles) and self.reset()  # Reset agent parameters if success/collision
-        self.sensor.radar.observation(vehicles)  # Get distance/velocity to neighbouring vehicles
+        def perception():
+            self.sensor.collision.observation(vehicles) and self.reset()  # Reset agent parameters if success/collision
+            self.sensor.radar.observation(vehicles)  # Get distance/velocity to neighbouring vehicles
 
-        # Motion planning/controllers---
-        """Calculate required acceleration of the agent
-                increment agent.velocity_x
-                Keep controller action and max velocity bounded"""
-        # self.velocity += self.pid.send() * 2.237  # Update agent velocity in mph/s
-        # acc = self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
-        if self.sensor.radar.closest_cars[0]:
-            self.acc = self.speed_controller.speed_control.send([self.velocity, self.sensor.radar.distances[0],
-                                                            self.sensor.radar.closest_cars[
-                                                                0].x_velocity]) * 2.237  # Update agent velocity in mph/s
-        else:
-            self.acc = self.speed_controller.speed_control.send(
-                [self.velocity, 1000, self.max_speed]) * 2.237  # Get new acc in mph/s
+        def behavioural_planner():
+            # Behaviour decision-making
+            # Update the agent's lane index
+            if abs(self.y_pos - self.goal_pos[1]) < 4:
+                self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
 
-        self.velocity += self.acc * (1 / FPS)
+            # Behaviour tree ----
+            self.bt_agent_data.initialise(self)  # Update agent data to send to the BT
+            self.bt_send.put(self.bt_agent_data)  # Send latest agent data to the queue
+            while not self.bt_return.empty():
+                self.goal_pos = self.bt_return.get()  # Get new goal position from the BT
 
-        # Behaviour decision-making # todo Easily switch between FSM and BT
-        if abs(self.y_pos - self.goal_pos[1]) < 4:
-            self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
-        # -------------
+        def path_planner():
+            cars = [car.rect for car in self.sensor.radar.closest_cars if car]  # List of pygame.rect objects
+            # Send data for the path planner
+            self.send_queue.put(((self.x_pos, self.y_pos, self.theta), (self.goal_pos[0], self.goal_pos[1], 0), cars))
+            while not self.return_queue.empty():
+                self.path = self.return_queue.get()  # Retrieve path from the path planner
 
-        # Finite state machine
-        # self.goal_pos = self.fsm.on_event()  # Update behavioural planner # todo Fix the finite state machine
-
-        # Behaviour tree ----
-        """Send the current agent instance to the queue on each iteration
-                receive new goal position from return queue"""
-        self.bt_agent_data.initialise(self)  # Update agent data to send to the BT
-        self.bt_send.put(self.bt_agent_data)  # Send latest agent data to the queue
-        while not self.bt_return.empty():
-            self.goal_pos = self.bt_return.get()  # Get new goal position from the BT
-        # ---
-
-        cars = [car.rect for car in self.sensor.radar.closest_cars if car]  # List of pygame.rect objects
-        # Send data for the path planner
-        # todo If the y-value of the goal position hasn't changed, the start position of the path search
-        #      should be the previous goal position. Then append the new path to the current path.
-        #      self.lane should change immediately now that traffic uses IDM.
-        # New ---------------------
-        # Problem: new path is not necessarily calculated the same iteration. May be out of date.
-        # if self.prev_goal_pos[1] == self.goal_pos[1]:
-        #     self.send_queue.put(((self.prev_goal_pos[0], self.prev_goal_pos[1], 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
-        #     # Retrieve path from the path planner
-        #     new_path = None
-        #     while not self.return_queue.empty():
-        #         new_path = self.return_queue.get()
-        #     if new_path:
-        #         self.path |= new_path
-        #         # print(self.path.items())
-        # else:
-        #     self.send_queue.put(((self.x_pos, self.y_pos, 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
-        #     # Retrieve path from the path planner
-        #     while not self.return_queue.empty():
-        #         self.path = self.return_queue.get()
-        #
-        # self.prev_goal_pos = self.goal_pos
-        # print(self.path.items())
-
-        # -------------------
-
-        # Original --------------
-        self.send_queue.put(((self.x_pos, self.y_pos, self.theta), (self.goal_pos[0], self.goal_pos[1], 0), cars))
-        # Retrieve path from the path planner
-        while not self.return_queue.empty():
-            self.path = self.return_queue.get()
-        # -------------------------------
-
-        # self.x_pos += (self.velocity * 1 / FPS) + 0.5 * self.acc * (1 / FPS) ** 2  # Increment agent position
-        self.dr = (self.velocity * 1 / FPS) + 0.5 * self.acc * (1 / FPS) ** 2
-        self.r += self.dr  # Increment agent position
-
-        self.x_pos += self.dr * cos(self.theta)
-        self.y_pos -= self.dr * sin(self.theta)
-        if self.path:
-            try:
-                (self.traj_y_pos, self.traj_heading) = self.path[ceil(self.x_pos)]  # Update agent y-position
-            except KeyError:
-                # self.x_pos can take a value >WINDOW_WIDTH when the agent reaches edge of the screen
-                pass
-
-        def crosstrack_error():
-            X_xte = self.x_pos
-            Y_xte = self.traj_y_pos
-            xte = sqrt((self.x_pos - X_xte) ** 2 + (self.y_pos - Y_xte) ** 2)  # The magnitude of the cross-track error
-
-            # Determine the offset direction
-            xte_vec = np.array([(X_xte - self.x_pos), (Y_xte - self.y_pos)])
-            heading = np.array([self.dr * cos(self.theta), - self.dr * sin(self.theta)])
-            Z = -np.cross(heading, xte_vec)
-            self.xte = np.sign(Z) * abs(xte)
-
-        def heading_error():
-            if self.traj_heading > pi:
-                self.traj_heading = self.traj_heading - 2*pi
-
-            self.phi = self.theta - self.traj_heading
-
-            if self.phi > pi:
-                self.phi = self.phi - 2*pi
-
-        def calculate_steering_angle():
-            # Calculate gain matrix using optimal control
-            k, _, _ = self.lateral_controller.trajectory_control.send(self.velocity / 2.237)
-            delta = -k * [self.xte, self.phi] * [1, 1]  # Controller action is u = -Kx
-            self.delta = np.sum(delta)
-            max_delta = 24 * 2 * pi / 360
-            if self.delta > max_delta:
-                self.delta = max_delta
-            elif self.delta < -max_delta:
-                self.delta = -max_delta
-
-            # self.delta *= 2 * pi / 360
-            return
-
-        def update_heading_angle():
-            # Yaw rate = Velocity / Radius
-            # Steering angle = length / Radius
-            # => Radius = length / steering angle
-            try:
-                if self.delta == 0:
-                    yaw_rate = 0
+        def motion_planner():
+            # Motion planning/controllers---
+            def adaptive_cruise_control():
+                """Calculate required acceleration of the agent
+                        increment agent.velocity_x
+                        Keep controller action and max velocity bounded"""
+                if self.sensor.radar.closest_cars[0]:
+                    self.acc = self.speed_controller.speed_control.send([self.velocity, self.sensor.radar.distances[0],
+                                                                    self.sensor.radar.closest_cars[
+                                                                        0].x_velocity]) * 2.237  # Update agent velocity in mph/s
                 else:
-                    radius = self.length / self.delta
-                    yaw_rate = (self.velocity / 2.237) / radius
-            except ZeroDivisionError:
-                yaw_rate = 0
-            finally:
-                self.theta += yaw_rate * 1 / scene.FPS
-                self.theta %= (2 * pi)
+                    self.acc = self.speed_controller.speed_control.send(
+                        [self.velocity, 1000, self.max_speed]) * 2.237  # Get new acc in mph/s
 
-            return
+            def lateral_control():
+                if self.path:
+                    try:
+                        (self.traj_y_pos, self.traj_heading) = self.path[ceil(self.x_pos)]  # Update agent y-position
+                    except KeyError:
+                        pass
+                    finally:
+                        self.path = {k: v for k, v in self.path.items() if k >= self.x_pos}
 
-        crosstrack_error()  # Calculate the current cross-track error
-        heading_error()  # Calculate the current heading error
-        calculate_steering_angle()  # Calculate the required steering angle
-        update_heading_angle()  # Calculate the new vehicle direction
+                def crosstrack_error():
+                    X_xte = self.x_pos
+                    Y_xte = self.traj_y_pos
+                    xte = sqrt((self.x_pos - X_xte) ** 2 + (self.y_pos - Y_xte) ** 2)  # The magnitude of the cross-track error
 
-        self.path = {k: v for k, v in self.path.items() if k >= self.x_pos}
-        self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the agent center
+                    # Determine the offset direction
+                    xte_vec = np.array([(X_xte - self.x_pos), (Y_xte - self.y_pos)])
+                    heading = np.array([self.dr * cos(self.theta), - self.dr * sin(self.theta)])
+                    Z = -np.cross(heading, xte_vec)
+                    self.xte = np.sign(Z) * abs(xte)
 
-    def update_position2(self, vehicles):
-        self.sensor.collision.observation(vehicles) and self.reset()  # Reset agent parameters if success/collision
-        self.sensor.radar.observation(vehicles)  # Get distance/velocity to neighbouring vehicles
+                def heading_error():
+                    if self.traj_heading > pi:
+                        self.traj_heading = self.traj_heading - 2*pi
 
-        # Motion planning/controllers---
-        """Calculate required acceleration of the agent
-                increment agent.velocity_x
-                Keep controller action and max velocity bounded"""
-        # self.velocity += self.pid.send() * 2.237  # Update agent velocity in mph/s
-        # acc = self.speed_controller.speed_control.send(None) * 2.237  # Update agent velocity in mph/s
-        if self.sensor.radar.closest_cars[0]:
-            self.acc = self.speed_controller.speed_control.send([self.velocity, self.sensor.radar.distances[0],
-                                                            self.sensor.radar.closest_cars[
-                                                                0].x_velocity]) * 2.237  # Update agent velocity in mph/s
-        else:
-            self.acc = self.speed_controller.speed_control.send(
-                [self.velocity, 1000, self.max_speed]) * 2.237  # Get new acc in mph/s
+                    self.phi = self.theta - self.traj_heading
 
-        self.velocity += self.acc * (1 / FPS)
+                    if self.phi > pi:
+                        self.phi = self.phi - 2*pi
 
-        # Behaviour decision-making # todo Easily switch between FSM and BT
-        if abs(self.y_pos - self.goal_pos[1]) < 4:
-            self.lane = [lane for lane, pos in LANES.items() if pos == self.goal_pos[1]][0]
-        # -------------
+                def calculate_steering_angle():
+                    # Calculate gain matrix using optimal control
+                    k, _, _ = self.lateral_controller.trajectory_control.send(self.velocity / 2.237)
+                    delta = -k * [self.xte, self.phi] * [1, 1]  # Controller action is u = -Kx
+                    self.delta = np.sum(delta)
+                    max_delta = 24 * 2 * pi / 360
+                    if self.delta > max_delta:
+                        self.delta = max_delta
+                    elif self.delta < -max_delta:
+                        self.delta = -max_delta
 
-        # Finite state machine
-        # self.goal_pos = self.fsm.on_event()  # Update behavioural planner # todo Fix the finite state machine
+                    return
 
-        # Behaviour tree ----
-        """Send the current agent instance to the queue on each iteration
-                receive new goal position from return queue"""
-        self.bt_agent_data.initialise(self)  # Update agent data to send to the BT
-        self.bt_send.put(self.bt_agent_data)  # Send latest agent data to the queue
-        while not self.bt_return.empty():
-            self.goal_pos = self.bt_return.get()  # Get new goal position from the BT
-        # ---
+                crosstrack_error()  # Calculate the current cross-track error
+                heading_error()  # Calculate the current heading error
+                calculate_steering_angle()  # Calculate the required steering angle
 
-        cars = [car.rect for car in self.sensor.radar.closest_cars if car]  # List of pygame.rect objects
-        # Send data for the path planner
-        # todo If the y-value of the goal position hasn't changed, the start position of the path search
-        #      should be the previous goal position. Then append the new path to the current path.
-        #      self.lane should change immediately now that traffic uses IDM.
-        # New ---------------------
-        # Problem: new path is not necessarily calculated the same iteration. May be out of date.
-        # if self.prev_goal_pos[1] == self.goal_pos[1]:
-        #     self.send_queue.put(((self.prev_goal_pos[0], self.prev_goal_pos[1], 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
-        #     # Retrieve path from the path planner
-        #     new_path = None
-        #     while not self.return_queue.empty():
-        #         new_path = self.return_queue.get()
-        #     if new_path:
-        #         self.path |= new_path
-        #         # print(self.path.items())
-        # else:
-        #     self.send_queue.put(((self.x_pos, self.y_pos, 0), (self.goal_pos[0], self.goal_pos[1], 0), cars))
-        #     # Retrieve path from the path planner
-        #     while not self.return_queue.empty():
-        #         self.path = self.return_queue.get()
-        #
-        # self.prev_goal_pos = self.goal_pos
-        # print(self.path.items())
+            adaptive_cruise_control()
+            lateral_control()
 
-        # -------------------
+        def update_vehicle_state():
+            def update_heading_angle():
+                # Yaw rate = Velocity / Radius
+                # Steering angle = length / Radius
+                # => Radius = length / steering angle
+                try:
+                    if self.delta == 0:
+                        yaw_rate = 0
+                    else:
+                        radius = self.length / self.delta
+                        yaw_rate = (self.velocity / 2.237) / radius
+                except ZeroDivisionError:
+                    yaw_rate = 0
+                finally:
+                    self.theta += yaw_rate * 1 / scene.FPS
+                    self.theta %= (2 * pi)
 
-        # Original --------------
-        self.send_queue.put(((self.x_pos, self.y_pos, self.theta), (self.goal_pos[0], self.goal_pos[1], 0), cars))
-        # Retrieve path from the path planner
-        while not self.return_queue.empty():
-            self.path = self.return_queue.get()
-        # -------------------------------
+                return
 
-        self.x_pos += (self.velocity * 1 / FPS) + 0.5 * self.acc * (1 / FPS) ** 2  # Increment agent position
-        if self.path:
-            try:
-                self.y_pos = self.path[ceil(self.x_pos)]  # Update agent y-position
-            except KeyError:
-                # self.x_pos can take a value >WINDOW_WIDTH when the agent reaches edge of the screen
-                pass
+            self.velocity += self.acc * (1 / FPS)
 
-        self.path = {k: v for k, v in self.path.items() if k >= self.x_pos}
-        self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the agent center
+            self.dr = (self.velocity * 1 / FPS) + 0.5 * self.acc * (1 / FPS) ** 2
+            self.r += self.dr  # Increment agent position
+
+            self.x_pos += self.dr * cos(self.theta)
+            self.y_pos -= self.dr * sin(self.theta)  # Pygame y-axis points downwards
+            update_heading_angle()  # Calculate the new vehicle direction
+
+            self.rect.center = (self.x_pos, self.y_pos)  # Update the location of the agent center
+
+        perception()
+        behavioural_planner()
+        path_planner()
+        motion_planner()
+        update_vehicle_state()
 
     def change_lane(self, direction):
         """Change the lane of the agent car."""

@@ -8,8 +8,6 @@ import curses
 from behaviour_executive import mission_planner
 from behaviour_executive import situational_context
 
-# todo https://py-trees-ros-tutorials.readthedocs.io/en/release-2.1.x/tutorials.html#id8
-
 
 class AgentDummy:
     """A dummy class to represent the agent object."""
