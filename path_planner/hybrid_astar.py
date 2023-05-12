@@ -53,8 +53,28 @@ class HybridAstar:
 
     def run(self, start_pos: tuple, goal_pos: tuple, vehicles: [pygame.rect]) -> [np.ndarray, [np.ndarray], int]:
         """Inputs: Start position (x, y, delta), Goal position (x, y, delta), vehicles list(Pygame.rect objects)"""
-        # Make sure the goal position is within the bounds of the pygame window
-        # if all(ai <= bi for ai, bi in zip(goal_pos[:2], (WINDOW_WIDTH, WINDOW_HEIGHT))):
+        # Modify obstacle size to account for Agent dimensions
+        vehicle_rects = [car.inflate(self.length, self.width) for car in vehicles if car]
+        self.reset(start_pos, goal_pos, vehicle_rects)  # Reset state of all nodes/costs/obstacles
+
+        self.f_current = self.heuristic(np.array(start_pos), np.array(goal_pos))
+        hq.heappush(self.open_heap, (self.f_current, start_pos))  # Put the start node/cost into the heapq
+
+        # Add the start node to the node dictionary
+        # (total cost, cont. pos., (disc. parent pos., cont. parent pos.), direction, delta)
+        self.open_dict[start_pos] = (self.f_current, start_pos, (start_pos, start_pos), 1, 0)
+
+        # Run the algorithm
+        timeout = time.time() + 0.07
+        while not self.iterate():
+            if time.time() > timeout:
+                break  # Exit the while loop if taking too long
+        else:
+            self.success()
+            return self.interp_path
+
+    def run2(self, start_pos: tuple, goal_pos: tuple, vehicles: [pygame.rect]) -> [np.ndarray, [np.ndarray], int]:
+        """Inputs: Start position (x, y, delta), Goal position (x, y, delta), vehicles list(Pygame.rect objects)"""
         # Modify obstacle size to account for Agent dimensions
         vehicle_rects = [car.inflate(self.length, self.width) for car in vehicles if car]
         self.reset(start_pos, goal_pos, vehicle_rects)  # Reset state of all nodes/costs/obstacles
@@ -186,7 +206,7 @@ class HybridAstar:
         try:
             self.f_current, self.current_d = hq.heappop(self.open_heap)  # Get total cost and position of current node
         except IndexError:
-            # print("Failed to find current node in the heap")
+            logger.warning("Failed to find current node in the heap")
             return
 
         self.closed_dict[self.current_d] = self.open_dict[self.current_d]  # Add current node to list of explored nodes
@@ -208,6 +228,22 @@ class HybridAstar:
         return finished
 
     def success(self):
+        path = []  # Final path
+        node = self.current_d
+        while tuple(node) != tuple(self.start_pos):
+            open_node = self.closed_dict[tuple(node)]  # (total_cost, node_continuous_coords, (parent_discrete_coords, parent_continuous_coords))
+            node, parent = open_node[2]
+            path.append(parent)
+        self.rev_final_path = np.vstack((*reversed(path), self.goal_pos))[::1]
+        if len(path) > 3:
+            try:
+                # noinspection PyTupleAssignmentBalance
+                tck, _ = itp.splprep([list(self.rev_final_path[:, i]) for i in range(3)], s=0, k=3)
+                self.interp_path = tck
+            except TypeError:
+                pass
+
+    def success2(self):
         path = []  # Final path
         node = self.current_d
         while tuple(node) != tuple(self.start_pos):
@@ -366,7 +402,7 @@ class HybridAstar:
         x_path, y_path = path[:, 0], path[:, 1]
 
         # Discretise the spline for plotting
-        x_new, y_new = itp.splev(np.linspace(0, 1, self.goal_pos[0]-self.start_pos[0] + 1), self.interp_path)
+        x_new, y_new, delta_new = itp.splev(np.linspace(0, 1, self.goal_pos[0]-self.start_pos[0] + 1), self.interp_path)
 
         # Plot the path on a new figure
         fig, ax = plt.subplots(figsize=(6, 6))

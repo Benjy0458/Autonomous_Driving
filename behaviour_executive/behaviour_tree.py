@@ -3,6 +3,7 @@ from multiprocessing import Queue
 import sys
 
 from typing import Callable
+import curses
 
 from behaviour_executive import mission_planner
 from behaviour_executive import situational_context
@@ -195,7 +196,8 @@ def highway_drive():
     return root
 
 
-def setup(bt_send: Queue, bt_return: Queue, root: callable(py_trees.behaviour.Behaviour) = highway_drive):
+def setup(bt_send: Queue, bt_return: Queue, root: callable(py_trees.behaviour.Behaviour) = highway_drive,
+          console: object = curses.initscr):
     """Sets up and runs the behaviour tree provided.
     Inputs:
         bt_send: A multiprocessing.Queue() object to receive data from the parent process
@@ -219,6 +221,9 @@ def setup(bt_send: Queue, bt_return: Queue, root: callable(py_trees.behaviour.Be
     # print(py_trees.display.unicode_tree(root=root))
     behaviour_tree.setup(timeout=0.05)
 
+    # console = curses.initscr()  # Initialise the console object
+    console = console()  # Initialise the console object
+
     def pre_tick(tree):
         """Executes before each tick of the behaviour tree."""
         # print("---------new tick---------\n")
@@ -231,6 +236,12 @@ def setup(bt_send: Queue, bt_return: Queue, root: callable(py_trees.behaviour.Be
         # print("Executing post-tick handler.")
         bt_return.put(blackboard.new_goal_pos)
 
+        # Console output
+        console.clear()
+        console.addstr('============= Behaviour Tree Status =============\n\n')
+        console.addstr(py_trees.display.unicode_tree(root=tree.root, show_status=True))
+        # console.addstr("--------------------------\n")
+        console.refresh()
         # print(py_trees.display.unicode_tree(root=tree.root, show_status=True))  # Print the unicode BT to the console
         # print("--------------------------\n")
         # print(py_trees.display.unicode_blackboard())  # Display blackboard data

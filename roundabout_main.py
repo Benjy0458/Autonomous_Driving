@@ -23,18 +23,15 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pygraphviz as pgv
 from navigation import shortest_path
-# import scipy as s
 from transpose_dict import TD
 import numpy as np
 
 import pygame
-from pygame import gfxdraw
 import time
 import random
-import threading
 import curses
 import logging
-import multiprocessing
+from multiprocessing import Process, Queue
 
 import scenario.roundabout as scene
 from controllers import IDM, OptimalControl
@@ -82,9 +79,9 @@ class World:
         clock = pygame.time.Clock()  # Controls the frame rate
 
         if live_data:
-            queue = multiprocessing.Queue()  # Stores data for the live graph
-            close = multiprocessing.Queue()  # Send data to exit the live graph
-            live_plot = multiprocessing.Process(target=plotting.live_graph, args=(queue, close))
+            queue = Queue()  # Stores data for the live graph
+            close = Queue()  # Send data to exit the live graph
+            live_plot = Process(target=plotting.live_graph, args=(queue, close))
             live_plot.start()
 
         self.TM and self.TM.timed_spawn.start()  # Spawn vehicles at regular intervals
@@ -120,7 +117,7 @@ class World:
 
                 if live_data and self.TM.vehicles:
                     v = self.TM.vehicles[0]
-                    queue.put((elapsed_time, v.xte, v.phi, v.delta*360/(2*pi), v.velocity, v.t))
+                    queue.put((elapsed_time, v.xte, v.phi, v.delta, v.velocity, v.t))
 
                 clock.tick_busy_loop(scene.FPS)  # Ensure program maintains desired frame rate
 
@@ -223,8 +220,8 @@ class TrafficManager:
         vehicle_categories = random.choices(population=["car", "truck"], cum_weights=[0.7, 1.0], k=number_of_vehicles)
 
         for v_cat in vehicle_categories:
-            # route = [self.road_network.segments[int(i)] for i in random.choice(self.road_network.routes)]
-            route = [self.road_network.segments[int(i)] for i in self.road_network.routes[10]]
+            route = [self.road_network.segments[int(i)] for i in random.choice(self.road_network.routes)]
+            # route = [self.road_network.segments[int(i)] for i in self.road_network.routes[10]]
             new_vehicle = Vehicle(width=10, length=20, route=route)  # Create a new vehicle
             for vehicle in new_vehicles:
                 if new_vehicle.route[0] == vehicle.route[0]:
@@ -388,7 +385,7 @@ class Vehicle(pygame.sprite.Sprite):
             def func(t: float) -> float:
                 x, y = self.route[self.active_segment].get_position(t)
                 dx, dy = self.route[self.active_segment].get_derivative(t)  # Gradient at the current position
-                return self.y_pos * dy - y * dy + self.x_pos * dx - x * dx
+                return (self.y_pos - y) * dy + (self.x_pos - x) * dx
 
             # The t-value representing the distance traversed along the current road segment
             self.t = bisection(func, self.route[self.active_segment].t_min, self.route[self.active_segment].t_max)
@@ -404,26 +401,30 @@ class Vehicle(pygame.sprite.Sprite):
 
         def heading_error():
             dx, dy = self.route[self.active_segment].get_derivative(self.t)  # Gradient at the current position
-            self.traj_angle = atan2(dy, dx) % (2 * pi)
-            self.phi = (self.traj_angle - self.theta)
-            while abs(self.phi) > pi / 2:
-                if self.phi > pi / 2:
-                    self.phi -= pi / 2
-                else:
-                    self.phi += pi / 2
+            # self.traj_angle = atan2(dy, dx) % (2 * pi)
+            # self.phi = (self.traj_angle - self.theta)
+            # while abs(self.phi) > pi / 2:
+            #     if self.phi > pi / 2:
+            #         self.phi -= pi / 2
+            #     else:
+            #         self.phi += pi / 2
+            self.traj_angle = atan2(dy, dx)
+            self.phi = self.theta - self.traj_angle
+            if self.phi > pi:
+                self.phi = self.phi - 2*pi
 
         def calculate_steering_angle():
             # Calculate gain matrix using optimal control
             k, _, _ = self.lateral_controller.trajectory_control.send(self.velocity)
             delta = -k * [self.xte, self.phi] * [1, 1]  # Controller action is u = -Kx
             self.delta = np.sum(delta)
-            max_delta = 45
+            max_delta = 24 * 2 * pi / 360
             if self.delta > max_delta:
                 self.delta = max_delta
             elif self.delta < -max_delta:
                 self.delta = -max_delta
 
-            self.delta *= 2 * pi / 360
+            # self.delta *= 2 * pi / 360
             return
 
         def update_heading_angle():
@@ -432,7 +433,7 @@ class Vehicle(pygame.sprite.Sprite):
             # => Radius = length / steering angle
             try:
                 radius = self.length / self.delta
-                yaw_rate = (self.velocity) / radius
+                yaw_rate = (self.velocity / 2.237) / radius
             except ZeroDivisionError:
                 yaw_rate = 0
             finally:

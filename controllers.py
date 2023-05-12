@@ -141,4 +141,7 @@ class OptimalControl:
 
             A = np.array([[0, V], [0, 0]])
             B = -np.array([[V], [V/self.length]])
-            K, P, E = lqr(A, B, self.Q, self.R)
+            try:
+                K, P, E = lqr(A, B, self.Q, self.R)
+            except Exception as e:
+                logger.warning(f"Encountered {e} trying to solve lqr problem.")
