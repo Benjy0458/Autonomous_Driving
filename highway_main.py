@@ -604,7 +604,15 @@ class Collision:
         if collide != -1:
             self.agent.color = (255, 0, 0)  # change the color to red
             if self.agent.x_pos > scene.DEAD_ZONE:
-                pygame.image.save(world.display_surface, f"CollisionHistory/{time.time()}.jpeg")
+                try:
+                    pygame.image.save(world.display_surface, f"CollisionHistory/{time.time()}.jpeg")
+                except Exception as e:
+                    if not os.path.isdir("CollisionHistory"):
+                        logger.info("CollisionHistory/ not found... attempting to create directory.")
+                        os.mkdir("CollisionHistory")
+                    else:
+                        logger.info(f"Encountered {e} attempting to update collision history")
+
                 self.agent.n_hits += 1  # Do not penalise collisions where a npc spawns on top of the agent.
                 self.agent.terminal_count += 1
             return True  # Finish the frame
