@@ -1,12 +1,10 @@
 import py_trees
 from multiprocessing import Queue
 import sys
-
 from typing import Callable
 import curses
 
-from behaviour_executive import mission_planner
-from behaviour_executive import situational_context
+from behaviour_executive import situational_context, mission_planner
 
 
 class AgentDummy:
@@ -68,13 +66,11 @@ class Condition(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status: py_trees.common.Status) -> None:
         """Nothing to clean up in this example"""
-        self.logger.debug(
-            "%s.terminate()[%s->%s]"
-            % (self.__class__.__name__, self.status, new_status)
-        )
+        self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
 
 
 class Action(py_trees.behaviour.Behaviour):
+    """A generic behaviour that requests and action."""
     def __init__(self, name: str, behaviour: callable):
         """Configure the name of the behaviour."""
         super(Action, self).__init__(name)
@@ -82,47 +78,21 @@ class Action(py_trees.behaviour.Behaviour):
         self.blackboard = self.attach_blackboard_client(name=f"{name}")
         # Set read only permissions for the agent data
         self.blackboard.register_key(key="agent", access=py_trees.common.Access.READ)
-        # Set write permissions for the new goal position (This is probably only needed for action behaviours)
+        # Set write permissions for the new goal position
         self.blackboard.register_key(key="new_goal_pos", access=py_trees.common.Access.WRITE)
-        # self.logger.debug("%s.__init__()" % self.__class__.__name__)
         self.logger.debug(f"{self.__class__.__name__}.__init__()->{str(self.behaviour)}")
 
     def setup(self, **kwargs: int) -> None:
         """Kickstart the separate process this behaviour will work with.
         Process is usually already running - setup method is only used to verify it exists."""
         self.logger.debug("%s.setup()" % self.__class__.__name__)
-        # self.logger.debug(f"{self.__class__.__name__}.setup()->{str(self.behaviour)}")
 
     def initialise(self) -> None:
         """Reset a counter variable."""
-        # pass
         self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        # self.parent_connection.send(["new goal"])
-        # self.percentage_completion = 0
 
     def update(self) -> py_trees.common.Status:
         """Increment the counter, monitor and decide new status."""
-        # new_status = py_trees.common.Status.RUNNING
-        # if self.agent.y_pos == self.agent.goal_pos[1]:
-        #     new_status = py_trees.common.Status.SUCCESS
-        # else:
-        #     self.behaviour()
-        #
-        # self.logger.debug("%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message))
-        # return new_status
-
-        # new_status = py_trees.common.Status.RUNNING
-        # if self.parent_connection.poll():
-        #     self.percentage_completion = self.parent_connection.recv().pop()
-        #     if self.percentage_completion == 100:
-        #         new_status = py_trees.common.Status.SUCCESS
-        # if new_status == py_trees.common.Status.SUCCESS:
-        #     self.feedback_message = "Processing finished"
-        #     self.logger.debug("%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message))
-        # else:
-        #     self.feedback_message = "{0}%".format(self.percentage_completion)
-        #     self.logger.debug("%s.update()[%s][%s]" % (self.__class__.__name__, self.status, self.feedback_message))
-        # return new_status
         new_status = py_trees.common.Status.RUNNING
         self.blackboard.new_goal_pos = self.behaviour(self.blackboard.agent)
 
@@ -136,8 +106,7 @@ class Action(py_trees.behaviour.Behaviour):
 # Composites
 def create_selector(children: [py_trees.behaviour.Behaviour], name: str = "Selector") -> py_trees.behaviour.Behaviour:
     """Create the root behaviour and its subtree.
-        Returns:
-            The root behaviour"""
+        Returns the root behaviour"""
     selector = py_trees.composites.Selector(name=name, memory=False)
     selector.add_children([*children])
     return selector
@@ -145,8 +114,7 @@ def create_selector(children: [py_trees.behaviour.Behaviour], name: str = "Selec
 
 def create_sequence(children: [py_trees.behaviour.Behaviour], name: str = "Sequence") -> py_trees.behaviour.Behaviour:
     """Create the root behaviour and its subtree.
-        Returns:
-            The root behaviour"""
+        Returns the root behaviour"""
     sequence = py_trees.composites.Sequence(name=name, memory=False)
     sequence.add_children([*children])
     return sequence
@@ -169,9 +137,8 @@ def highway_drive():
     free_ride = Action(name="Free Ride", behaviour=mission_planner.free_ride)
 
     # Composites
-    yield_to_vehicle = create_selector([inverter_vehicle_approaching, inverter_right_lane_free, lane_change_right])
-    # free_ride_seq = create_sequence([clear_road, yield_to_vehicle, free_ride])
-    free_ride_seq = create_sequence([yield_to_vehicle, clear_road, free_ride])
+    yield_to_vehicle = create_selector([inverter_vehicle_approaching, inverter_right_lane_free, lane_change_right], name="Yield")
+    free_ride_seq = create_sequence([yield_to_vehicle, clear_road, free_ride], name="Cruise")
     # ---------
 
     # Right sub-tree ---------
@@ -184,13 +151,12 @@ def highway_drive():
     follow = Action(name="Follow", behaviour=mission_planner.follow)
 
     # Composites
-    overtake = create_sequence([slow_vehicle, left_lane_free, lane_change_left])
-    follow_sel = create_selector([overtake, follow])
+    overtake = create_sequence([slow_vehicle, left_lane_free, lane_change_left], name="Overtake")
+    follow_sel = create_selector([overtake, follow], name="Follow")
     # ---------
 
     # Create root
-    root = create_selector([free_ride_seq, follow_sel])
-    # root = create_selector([yield_to_vehicle, free_ride_seq, follow_sel])
+    root = create_selector([free_ride_seq, follow_sel], name="Root")
     return root
 
 
@@ -216,39 +182,24 @@ def setup(bt_send: Queue, bt_return: Queue, root: callable(py_trees.behaviour.Be
 
     root = root()  # Create the root behaviour
     behaviour_tree = py_trees.trees.BehaviourTree(root=root)  # Create the behaviour tree object
-    # print(py_trees.display.unicode_tree(root=root))
     behaviour_tree.setup(timeout=0.05)
 
-    # console = curses.initscr()  # Initialise the console object
     console = console()  # Initialise the console object
 
     def pre_tick(tree):
         """Executes before each tick of the behaviour tree."""
-        # print("---------new tick---------\n")
-        # print("Executing pre-tick handler. Getting latest agent data...")
         while not bt_send.empty():
             blackboard.agent = bt_send.get()  # Update the blackboard with the latest agent data
 
     def post_tick(tree):
         """Executes at the end of each tick."""
-        # print("Executing post-tick handler.")
         bt_return.put(blackboard.new_goal_pos)
 
         # Console output
         console.clear()
         console.addstr('============= Behaviour Tree Status =============\n\n')
         console.addstr(py_trees.display.unicode_tree(root=tree.root, show_status=True))
-        # console.addstr("--------------------------\n")
         console.refresh()
-        # print(py_trees.display.unicode_tree(root=tree.root, show_status=True))  # Print the unicode BT to the console
-        # print("--------------------------\n")
-        # print(py_trees.display.unicode_blackboard())  # Display blackboard data
-        # print("--------------------------\n")
-        # # Display which behaviours have read/write permissions to data in the blackboard
-        # print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
-        # print("--------------------------\n")
-        # print(py_trees.display.unicode_blackboard_activity_stream())
-        # print("--------------------------\n")
 
     try:
         behaviour_tree.tick_tock(
@@ -320,10 +271,5 @@ def main(render=True):
         behaviour_tree.interrupt()
 
 
-def main2():
-    setup(bt_send=Queue(), bt_return=Queue(), root=highway_drive)
-
-
 if __name__ == "__main__":
-    # main2()
-    main(render=False)
+    main(render=True)

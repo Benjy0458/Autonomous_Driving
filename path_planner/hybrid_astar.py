@@ -1,5 +1,6 @@
 # ---------------------
-from scenario.highway import WINDOW_HEIGHT, WINDOW_WIDTH, LANES
+# Imports
+# ---------------------
 import pygame
 import numpy as np
 import heapq as hq
@@ -10,8 +11,9 @@ from matplotlib.collections import PatchCollection
 import time
 from operator import itemgetter
 from itertools import repeat
-
 import logging
+
+from scenario.highway import WINDOW_HEIGHT, LANES
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -23,18 +25,23 @@ logger.addHandler(file_handler)  # Add file handler to the logger
 
 
 class HybridAstar:
-    lf = 2  # Front semi-wheelbase
-    lr = 2.5  # Rear semi-wheelbase
-    length = 15  # length (x-dim) of the car
-    width = 8  # width (y-dim) of the car
+    lf = 2  # Front semi-wheelbase (m)
+    lr = 2.5  # Rear semi-wheelbase (m)
     velocity = 1  # Directions
-    # Possible steering angles (num must be odd to have option of delta=0)
-    delta = np.array([np.deg2rad(np.linspace(-45, 45, num=33))]).reshape(-1, 1)
     dt = 4  # Timestep
 
-    def __init__(self):
+    def __init__(self, delta_max: int = 24, length: float = 15 * 3/10, width: float = 8 * 3/10):
+        """
+        Args:
+            delta_max: The maximum possible steering angle of the vehicle
+            length: The length of the vehicle (m)
+            width: The width of the vehicle (m)
+        """
         # Bounds of the search area
         self.min_y, self.max_y = 0, WINDOW_HEIGHT
+        self.length, self.width = length, width  # Length and width of the car
+        # Possible steering angles (num must be odd to have option of delta=0)
+        self.delta = np.array([np.deg2rad(np.linspace(-delta_max, delta_max, num=33))]).reshape(-1, 1)
         self.reset()
 
         logger.info('Created {} instance'.format(self.__class__.__name__))
@@ -58,28 +65,6 @@ class HybridAstar:
         self.reset(start_pos, goal_pos, vehicle_rects)  # Reset state of all nodes/costs/obstacles
 
         self.f_current = self.heuristic(np.array(start_pos), np.array(goal_pos))
-        hq.heappush(self.open_heap, (self.f_current, start_pos))  # Put the start node/cost into the heapq
-
-        # Add the start node to the node dictionary
-        # (total cost, cont. pos., (disc. parent pos., cont. parent pos.), direction, delta)
-        self.open_dict[start_pos] = (self.f_current, start_pos, (start_pos, start_pos), 1, 0)
-
-        # Run the algorithm
-        timeout = time.time() + 0.07
-        while not self.iterate():
-            if time.time() > timeout:
-                break  # Exit the while loop if taking too long
-        else:
-            self.success()
-            return self.interp_path
-
-    def run2(self, start_pos: tuple, goal_pos: tuple, vehicles: [pygame.rect]) -> [np.ndarray, [np.ndarray], int]:
-        """Inputs: Start position (x, y, delta), Goal position (x, y, delta), vehicles list(Pygame.rect objects)"""
-        # Modify obstacle size to account for Agent dimensions
-        vehicle_rects = [car.inflate(self.length, self.width) for car in vehicles if car]
-        self.reset(start_pos, goal_pos, vehicle_rects)  # Reset state of all nodes/costs/obstacles
-
-        self.f_current = self.heuristic(np.array(start_pos[:2]), np.array(goal_pos[:2]))
         hq.heappush(self.open_heap, (self.f_current, start_pos))  # Put the start node/cost into the heapq
 
         # Add the start node to the node dictionary
@@ -171,38 +156,6 @@ class HybridAstar:
             self.open_heap.extend(new_heap)
             hq.heapify(self.open_heap)
 
-        def update_heap2(valid_nwc):
-            def update_open_dict(neighbours):
-                sorted_neighbours = neighbours[np.argsort(neighbours[:, 8])]  # Sort smallest to largest by f_cost
-                # Indices of unique elements with smallest f_cost
-                _, unique_index = np.unique(sorted_neighbours[:, :3], return_index=True, axis=0)
-                valid_ncw_unique = sorted_neighbours[unique_index, :]  # Return unique values with the smallest f_cost
-
-                open_list = list(self.open_dict.keys())  # Get the list of nodes in the open dictionary
-                # Check which neighbours are not in the open dictionary
-                D = np.full_like(valid_ncw_unique[:, 0], True, dtype=bool) if not open_list else \
-                    self.compute_boolean_difference(valid_ncw_unique[:, :3], np.array(open_list)).squeeze()
-                not_in_open_dict = valid_ncw_unique[D]
-                in_open_dict = valid_ncw_unique[~D]
-                previous_f_costs = np.array([self.open_dict[tuple(key)][0] if tuple(key) in self.open_dict else []
-                                             for key in in_open_dict[:, :3]])
-                lower_cost_indices = np.where(in_open_dict[:, 8] < previous_f_costs)[0]
-                lower_cost = in_open_dict[lower_cost_indices]
-
-                # Update open dictionary
-                new_key_values = {
-                    tuple(row[:3]): (row[8], row[4:7], (self.current_d, self.continuous_pos), row[7], row[6])
-                    for row in np.concatenate((not_in_open_dict, lower_cost))}
-                self.open_dict.update(new_key_values)
-
-            update_open_dict(valid_nwc)
-
-            # Update heapq----- Update contains items: not in open dict, in open dict with lower cost than before.
-            new_heap = [(row[8], tuple(row[:3])) for row in valid_nwc]
-            self.open_heap = [v for v in self.open_heap if tuple(v[1]) not in valid_nwc[:, :3]]
-            hq.heapify(self.open_heap)
-            [hq.heappush(self.open_heap, item) for item in new_heap if item[1] in self.open_dict]
-
         try:
             self.f_current, self.current_d = hq.heappop(self.open_heap)  # Get total cost and position of current node
         except IndexError:
@@ -239,23 +192,6 @@ class HybridAstar:
             try:
                 # noinspection PyTupleAssignmentBalance
                 tck, _ = itp.splprep([list(self.rev_final_path[:, i]) for i in range(3)], s=0, k=3)
-                self.interp_path = tck
-            except TypeError:
-                pass
-
-    def success2(self):
-        path = []  # Final path
-        node = self.current_d
-        while tuple(node) != tuple(self.start_pos):
-            open_node = self.closed_dict[tuple(node)]  # (total_cost, node_continuous_coords, (parent_discrete_coords, parent_continuous_coords))
-            node, parent = open_node[2]
-            path.append(parent)
-        self.rev_final_path = np.vstack((*reversed(path), self.goal_pos))[::1]
-        if len(path) > 3:
-            x_path, y_path = self.rev_final_path[:, 0], self.rev_final_path[:, 1]
-            try:
-                # noinspection PyTupleAssignmentBalance
-                tck, _ = itp.splprep([list(x_path), list(y_path)], s=0, k=3)
                 self.interp_path = tck
             except TypeError:
                 pass
@@ -304,37 +240,6 @@ class HybridAstar:
         valid_neighbours_with_cost = np.concatenate((valid_neighbours, f_cost.reshape(-1, 1)), axis=1)
         return valid_neighbours_with_cost[valid_neighbours_with_cost[:, 0] != 0]  # Remove invalid neighbours
 
-    def get_node_costs2(self, valid_neighbours, obstacles):
-        def g_cost(valid_neighbours, obstacles):
-            """Calculates the cost of moving from the current node to each neighbour."""
-            # Obstacle cost------------
-            A, B = valid_neighbours[:, 3:5], obstacles
-            try: difference = (A[:, np.newaxis] - B).reshape(-1, A.shape[1])
-            except ValueError: total_obs_cost = 0
-            else:
-                sqrdiff = difference ** 2
-                sqrdiffsum = np.sum(sqrdiff, axis=1)
-                proximity = np.sqrt(sqrdiffsum).reshape(np.size(A, axis=0), -1)
-
-                prox_distance = 3 # A cost of 1 is applied if a neighbour is this many units away from an obstacle
-                obstacle_cost = (prox_distance / proximity) ** 2  # Each row corresponds to a neighbour, each column corresponds to a point on an obstacle.
-                total_obs_cost = np.sum(obstacle_cost, axis=1)  # The total obstacle cost for each neighbour
-
-            steer_cost = abs(valid_neighbours[:, 6] - self.current_delta) / self.delta.max() + 1  # Steering angle cost. The difference between the steering angle of each neighbour and the current steer angle. Normalised by the max steering angle
-            reverse_cost = (valid_neighbours[:, 7] < 0) * 100 + 1 # Penalise reversing
-            heading_cost = (abs(np.pi - abs((valid_neighbours[:, 5] - self.continuous_pos[2]) - np.pi)) / np.pi) + 1  # Heading cost
-
-            return total_obs_cost * steer_cost * reverse_cost * heading_cost
-
-        g_local = g_cost(valid_neighbours, obstacles) # Cost from current node to neighbouring nodes
-        g_cost = self.f_current - self.heuristic(np.array(self.continuous_pos[:2]), np.array(self.goal_pos[:2]))  # Cost from start to the current node
-
-        g_cost += g_local # Add the local costs to the cost so far
-        f_cost = (g_cost + self.heuristic(valid_neighbours[:, 3:5], self.goal_pos[:2])).reshape(-1,1) # Calculate the total cost for each neighbour
-
-        valid_neighbours_with_cost = np.concatenate((valid_neighbours, f_cost),axis=1) # Concatenate the list of costs with the modified list of neighbours.
-        return valid_neighbours_with_cost[~np.all(valid_neighbours == 0,axis=1)] # Remove invalid neighbours. Last element in each row of valid2 is the cost associated with that neighbour.
-
     def kinematic_model(self, current_c):
         beta = np.arctan((self.lf / (self.lf + self.lr)) * np.tan(self.delta)) * self.dt  # Sideslip angle
         # Next x-position (direction * cos(steer_angle + sideslip)) * timestep
@@ -350,36 +255,9 @@ class HybridAstar:
         vs = np.tile(self.velocity, self.delta.shape)  # Velocity values corresponding to each neighbour
         return np.column_stack((neighbours_d, neighbours_c, deltas, vs))
 
-    def kinematic_model2(self, current_c):
-        def cell(q):
-            q1 = np.around(q[0], decimals=4)
-            q3 = np.around(q[1], decimals=4)
-            q2 = q[2]
-            return np.transpose(np.dstack((q1, q3, q2)), [2, 0, 1])
-
-        def do_calc():
-            beta = np.arctan((self.lf / (self.lf + self.lr)) * np.tan(self.delta)) * self.dt  # Sideslip angle
-            neighbour_x_c = current_c[0] + (self.velocity * np.cos(
-                current_c[2] + beta)) * self.dt  # Next x-position (direction * cos(steer_angle + sideslip)) * timestep
-            neighbour_y_c = current_c[1] + (self.velocity * np.sin(
-                current_c[2] + beta)) * self.dt  # Next y-position "" sin(steer_angle + sideslip) ""
-            neighbour_theta_c = (current_c[2] + (self.velocity * np.sin(beta) / self.lr) * self.dt) % (
-                    2 * np.pi)  # New heading angle is the current_heading_angle + (direction * sin(sideslip/b) * timestep)
-
-            return np.stack((neighbour_x_c, neighbour_y_c, neighbour_theta_c))
-
-        neighbours_c = do_calc()  # Continuous position of neighbours
-        neighbours_d = cell(neighbours_c)  # Discrete position of neighbours
-        deltas = self.delta * np.ones_like(self.velocity)  # Delta values corresponding to each neighbour
-        vs = self.velocity * np.ones_like(self.delta)  # Velocity values corresponding to each neighbour
-        neighbours = np.concatenate((neighbours_d.T.reshape(-1, 3), neighbours_c.T.reshape(-1, 3),
-                                     deltas.T.reshape(-1, 1), vs.T.reshape(-1, 1)), axis=1)
-
-        return neighbours
-
     @staticmethod
     def heuristic(position: np.ndarray, target: np.ndarray) -> float:
-        """Heuristic function used by the algorithm. position can be an 2D numpy array."""
+        """Euclidean distance heuristic function used by the algorithm. position can be an 2D numpy array."""
         h_cost = np.sum(((position - target) ** 2), axis=1 if position.ndim - 1 else None)
         return np.sqrt(h_cost)
 
@@ -388,12 +266,12 @@ class HybridAstar:
         """Computes the boolean difference between two arrays, A and B.
         Returns a boolean array with shape (n, 1), where n is the number of rows in A.
         Checks if each row of A exists in B, returns 0 if True.
-        Output is a logical vector of length 'num rows of A'. A and B must be of size (m,k), (n,k)."""
+        Returns a logical vector of length 'num rows of A'. A and B must be of size (m,k), (n,k)."""
         try:
             diff = np.logical_not(np.all(A[:, np.newaxis] == B, axis=2)).all(axis=1)
         except ValueError as e:
             diff = np.ones_like(A[:, 0], dtype=bool)
-            # raise ValueError("Arrays must have the same number of columns.") from e
+            logger.error(f"{e}: Arrays must have the same number of columns.")
         return diff.reshape(-1, 1)
 
     def plot_solution(self, path, obstacles):

@@ -1,44 +1,27 @@
-"""
-Road class
-Type
-Start point
-End point
-Length
-Get position
-Draw
-
-Slope of an ellipse:
-https://math.stackexchange.com/questions/1810283/determine-the-slope-of-a-point-on-a-ellipse
-
-Constant speed along a path:
-https://gamedev.stackexchange.com/questions/14985/determine-arc-length-of-a-catmull-rom-spline-to-move-at-a-constant-speed/14995#14995
-"""
 # =================================
 # Imports
 # =================================
 import os
-from math import pi, sin, cos, sqrt, atan2, log
-from itertools import product, chain
+from math import pi, sin, cos, sqrt, atan2
+from itertools import product
 import matplotlib.pyplot as plt
-import networkx as nx
 import pygraphviz as pgv
-from navigation import shortest_path
 from transpose_dict import TD
 import numpy as np
-
 import pygame
 import time
 import random
 import curses
 import logging
 from multiprocessing import Process, Queue
+import ctypes
 
 import scenario.roundabout as scene
+from navigation import shortest_path
 from controllers import IDM, OptimalControl
 from utils import RepeatedTimer
 import plotting
 
-import ctypes
 ctypes.windll.user32.SetProcessDPIAware()
 
 logger = logging.getLogger(__name__)
@@ -71,7 +54,6 @@ class World:
         self.road_network = None
         self.TM = None  # Create a new instance of the traffic manager
         self.start_time = 0  # Stores the start time of the simulation
-        # self.vehicles = []  # All active vehicles in the window
         logger.info(f'Created new instance of the simulation environment.')
 
     def game_loop(self, live_data: bool = False) -> None:
@@ -85,8 +67,6 @@ class World:
             live_plot.start()
 
         self.TM and self.TM.timed_spawn.start()  # Spawn vehicles at regular intervals
-        # self.agent and self.agent.bt_tick.start()  # Start the agent behaviour tree subprocess
-        # self.agent and self.agent.path_planner.start()  # Start the agent path planner subprocess
 
         running = True
         try:
@@ -120,7 +100,6 @@ class World:
                     queue.put((elapsed_time, v.xte, v.phi, v.delta, v.velocity, v.t))
 
                 clock.tick_busy_loop(scene.FPS)  # Ensure program maintains desired frame rate
-
         finally:
             if self.TM:
                 self.TM.timed_spawn.stop()  # Stop the spawn vehicles thread
@@ -131,8 +110,6 @@ class World:
                 live_plot.join(timeout=5)
                 live_plot.kill()
                 logger.debug("Succesfully closed the live plot.")
-
-            # pygame.image.save(self.display_surface, f"Roundabout_road_network.jpeg")
 
     def update_geometry(self):
         # Scale the background image
@@ -154,22 +131,12 @@ class World:
         [v.draw(self.display_surface) for v in self.TM.vehicles]  # Draw vehicles on the window
 
     def caption(self, elapsed_time: float, clock: pygame.time.Clock) -> None:
-        # tracks_count = self.TM.lane_distribution() if self.TM else 0
         cap = []
         sim_cap = f"Elapsed time: {round(elapsed_time)}, FPS: {round(clock.get_fps())}"
-        # sim_cap = f"Elapsed time: {round(elapsed_time)}, FPS: {round(clock.get_fps())}, " \
-        #           f"Traffic density: {round(TRAFFIC_DENSITY, 1)}"
         cap.append(sim_cap)
         if self.TM:
             tm_cap = f"Num Vehicles: {len(self.TM.vehicles)}"
             cap.append(tm_cap)
-        # if self.agent:
-        #     # todo Caption should only show current state if FSM is active
-        #     agent_cap = f"Scenarios simulated: {self.agent.terminal_count}, Collisions: {self.agent.n_hits}, " \
-        #                 f"Speed: {round(self.agent.x_velocity)} mph, " \
-        #                 f"Goal pos: {[round(v) for v in self.agent.goal_pos]}, " \
-        #                 f"Current state: {str(self.agent.fsm.state)}, Lane: {self.agent.lane}"
-        #     cap.append(agent_cap)
 
         caption = ", ".join(cap)
         pygame.display.set_caption(caption)
@@ -303,16 +270,10 @@ class Vehicle(pygame.sprite.Sprite):
         self.traj_angle = new_angle % (2 * pi)
 
     def update_position(self):
-        """
-        We have reached the end of the current segment if we have passed the line normal to the end point of the segment.
-        The gradient of the normal is -dx/dy, with t=1.
-        End position is (x, y), with t=1.
-
-        The
-        therefore the line eqn is
-        """
+        """Updates the internal state of the vehicle."""
 
         def get_front_car_data():
+            """Returns the relative distance and velocity of the next vehicle the current route."""
             if self.front_car and self.front_car.active_segment < len(self.front_car.route):
                 """
                 The distance of the front car along its current segment is front_car.r - front_car.segments_completed
@@ -368,6 +329,7 @@ class Vehicle(pygame.sprite.Sprite):
 
         def crosstrack_error():
             def bisection(foo: callable, lower: float, upper: float, tol: float = 0.001, max_iter: int = 60) -> float:
+                """Implements the bisection method on the provided function, foo."""
                 fa = foo(lower)
                 F = fa
                 n = 0
@@ -401,15 +363,8 @@ class Vehicle(pygame.sprite.Sprite):
 
         def heading_error():
             dx, dy = self.route[self.active_segment].get_derivative(self.t)  # Gradient at the current position
-            # self.traj_angle = atan2(dy, dx) % (2 * pi)
-            # self.phi = (self.traj_angle - self.theta)
-            # while abs(self.phi) > pi / 2:
-            #     if self.phi > pi / 2:
-            #         self.phi -= pi / 2
-            #     else:
-            #         self.phi += pi / 2
-            self.traj_angle = atan2(dy, dx)
-            self.phi = self.theta - self.traj_angle
+            self.traj_angle = atan2(dy, dx)  # Angle of the trajectory at the current position
+            self.phi = self.theta - self.traj_angle  # Heading error
             if self.phi > pi:
                 self.phi = self.phi - 2*pi
 
@@ -424,10 +379,10 @@ class Vehicle(pygame.sprite.Sprite):
             elif self.delta < -max_delta:
                 self.delta = -max_delta
 
-            # self.delta *= 2 * pi / 360
             return
 
         def update_heading_angle():
+            """Updates the heading angle of the vehicle."""
             # Yaw rate = Velocity / Radius
             # Steering angle = length / Radius
             # => Radius = length / steering angle
@@ -815,10 +770,12 @@ class Vehicle(pygame.sprite.Sprite):
         pass
 
     def draw(self, display_surface):
+        """Draws the vehicle on the window."""
         display_surface.blit(self.image, self.rect)
 
 
 class RoadNetwork:
+    """A class containing road data for the scenario."""
     def __init__(self, graph: dict[dict] = None, spawn_points: [int] = None, goal_points: [int] = None, routes: [tuple] = None, road_data: callable = None):
         """
         Args:
@@ -1643,7 +1600,6 @@ def main():
     def plot_arc_length():
         plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(1, 2, figsize=(9, 6), sharex="all", sharey="all")
-        # [ax[int(i >= 16)].plot(*world.road_network.segments[i].plot()[1], 'r') for i in range(14, 30)]
         for i in range(15, 30):  # 16, 30 for bezier
             segment = world.road_network.segments[i]
             line, line2 = segment.plot()
@@ -1655,8 +1611,6 @@ def main():
         ax[1].title.set_text("Quadratic Bezier")
         ax[0].set_ylabel('Normalised Arc Length')
         [ax[i].set_xlabel('Normalised Parameter') for i in range(2)]
-        # ax[0].set_xlabel('Normalised Parameter')
-        # ax[1].set_xlabel('Normalised Parameter')
         ax[0].legend(['t', 'Reparameterisation by Arc Length'])
         ax[0].set_xlim([0, 1])
         ax[0].set_ylim([0, 1])

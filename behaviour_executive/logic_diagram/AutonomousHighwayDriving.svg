@@ -5,51 +5,51 @@
  -->
 <!-- Title: pastafarianism Pages: 1 -->
 <svg width="718pt" height="404pt"
- viewBox="0.00 0.00 717.89 404.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ viewBox="0.00 0.00 717.86 404.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 400)">
 <title>pastafarianism</title>
-<polygon fill="white" stroke="none" points="-4,4 -4,-400 713.89,-400 713.89,4 -4,4"/>
-<!-- Selector -->
+<polygon fill="white" stroke="none" points="-4,4 -4,-400 713.86,-400 713.86,4 -4,4"/>
+<!-- Root -->
 <g id="node1" class="node">
-<title>Selector</title>
-<polygon fill="cyan" stroke="black" points="413.36,-370.54 413.36,-385.46 396.81,-396 373.42,-396 356.87,-385.46 356.87,-370.54 373.42,-360 396.81,-360 413.36,-370.54"/>
-<text text-anchor="middle" x="385.12" y="-375.8" font-family="Times New Roman,serif" font-size="9.00">Selector</text>
+<title>Root</title>
+<polygon fill="cyan" stroke="black" points="398.12,-370.54 398.12,-385.46 382.3,-396 359.93,-396 344.12,-385.46 344.12,-370.54 359.93,-360 382.3,-360 398.12,-370.54"/>
+<text text-anchor="middle" x="371.12" y="-375.8" font-family="Times New Roman,serif" font-size="9.00">Root</text>
 </g>
-<!-- Sequence -->
+<!-- Cruise -->
 <g id="node2" class="node">
-<title>Sequence</title>
-<polygon fill="orange" stroke="black" points="373.12,-324 319.12,-324 319.12,-288 373.12,-288 373.12,-324"/>
-<text text-anchor="middle" x="346.12" y="-303.8" font-family="Times New Roman,serif" font-size="9.00">Sequence</text>
+<title>Cruise</title>
+<polygon fill="orange" stroke="black" points="361.12,-324 307.12,-324 307.12,-288 361.12,-288 361.12,-324"/>
+<text text-anchor="middle" x="334.12" y="-303.8" font-family="Times New Roman,serif" font-size="9.00">Cruise</text>
 </g>
-<!-- Selector&#45;&gt;Sequence -->
+<!-- Root&#45;&gt;Cruise -->
 <g id="edge1" class="edge">
-<title>Selector&#45;&gt;Sequence</title>
-<path fill="none" stroke="black" d="M375.48,-359.7C371.18,-351.98 366.01,-342.71 361.22,-334.11"/>
-<polygon fill="black" stroke="black" points="364.31,-332.46 356.38,-325.43 358.19,-335.87 364.31,-332.46"/>
+<title>Root&#45;&gt;Cruise</title>
+<path fill="none" stroke="black" d="M361.97,-359.7C357.89,-351.98 352.99,-342.71 348.45,-334.11"/>
+<polygon fill="black" stroke="black" points="351.63,-332.65 343.86,-325.44 345.44,-335.92 351.63,-332.65"/>
 </g>
-<!-- Selector** -->
+<!-- Follow -->
 <g id="node11" class="node">
-<title>Selector**</title>
-<polygon fill="cyan" stroke="black" points="496.11,-298.54 496.11,-313.46 476.2,-324 448.04,-324 428.12,-313.46 428.12,-298.54 448.04,-288 476.2,-288 496.11,-298.54"/>
-<text text-anchor="middle" x="462.12" y="-303.8" font-family="Times New Roman,serif" font-size="9.00">Selector**</text>
+<title>Follow</title>
+<polygon fill="cyan" stroke="black" points="489.12,-298.54 489.12,-313.46 473.3,-324 450.93,-324 435.12,-313.46 435.12,-298.54 450.93,-288 473.3,-288 489.12,-298.54"/>
+<text text-anchor="middle" x="462.12" y="-303.8" font-family="Times New Roman,serif" font-size="9.00">Follow</text>
 </g>
-<!-- Selector&#45;&gt;Selector** -->
+<!-- Root&#45;&gt;Follow -->
 <g id="edge10" class="edge">
-<title>Selector&#45;&gt;Selector**</title>
-<path fill="none" stroke="black" d="M401.07,-362.5C411.25,-353.24 424.68,-341.04 436.35,-330.43"/>
-<polygon fill="black" stroke="black" points="438.68,-333.04 443.72,-323.72 433.97,-327.86 438.68,-333.04"/>
+<title>Root&#45;&gt;Follow</title>
+<path fill="none" stroke="black" d="M388.23,-363.83C401.62,-353.54 420.47,-339.04 435.77,-327.26"/>
+<polygon fill="black" stroke="black" points="437.78,-330.14 443.57,-321.27 433.51,-324.59 437.78,-330.14"/>
 </g>
-<!-- Selector* -->
+<!-- Yield -->
 <g id="node3" class="node">
-<title>Selector*</title>
-<polygon fill="cyan" stroke="black" points="206.61,-226.54 206.61,-241.46 188.16,-252 162.07,-252 143.62,-241.46 143.62,-226.54 162.07,-216 188.16,-216 206.61,-226.54"/>
-<text text-anchor="middle" x="175.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Selector*</text>
+<title>Yield</title>
+<polygon fill="cyan" stroke="black" points="204.12,-226.54 204.12,-241.46 188.3,-252 165.93,-252 150.12,-241.46 150.12,-226.54 165.93,-216 188.3,-216 204.12,-226.54"/>
+<text text-anchor="middle" x="177.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Yield</text>
 </g>
-<!-- Sequence&#45;&gt;Selector* -->
+<!-- Cruise&#45;&gt;Yield -->
 <g id="edge2" class="edge">
-<title>Sequence&#45;&gt;Selector*</title>
-<path fill="none" stroke="black" d="M318.64,-293.75C289.38,-281.77 242.94,-262.77 210.86,-249.63"/>
-<polygon fill="black" stroke="black" points="212.55,-246.54 201.97,-245.99 209.9,-253.02 212.55,-246.54"/>
+<title>Cruise&#45;&gt;Yield</title>
+<path fill="none" stroke="black" d="M306.77,-292.81C279.81,-280.79 238.61,-262.42 209.91,-249.62"/>
+<polygon fill="black" stroke="black" points="211.52,-246.51 200.96,-245.63 208.67,-252.9 211.52,-246.51"/>
 </g>
 <!-- Clear Road -->
 <g id="node9" class="node">
@@ -57,11 +57,11 @@
 <ellipse fill="gray" stroke="black" cx="294.12" cy="-234" rx="32.16" ry="18"/>
 <text text-anchor="middle" x="294.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Clear Road</text>
 </g>
-<!-- Sequence&#45;&gt;Clear Road -->
+<!-- Cruise&#45;&gt;Clear Road -->
 <g id="edge8" class="edge">
-<title>Sequence&#45;&gt;Clear Road</title>
-<path fill="none" stroke="black" d="M333.26,-287.7C327.1,-279.4 319.6,-269.31 312.83,-260.19"/>
-<polygon fill="black" stroke="black" points="315.78,-258.3 307.01,-252.36 310.17,-262.47 315.78,-258.3"/>
+<title>Cruise&#45;&gt;Clear Road</title>
+<path fill="none" stroke="black" d="M324.23,-287.7C319.71,-279.78 314.25,-270.23 309.23,-261.44"/>
+<polygon fill="black" stroke="black" points="312.37,-259.88 304.37,-252.94 306.29,-263.36 312.37,-259.88"/>
 </g>
 <!-- Free Ride -->
 <g id="node10" class="node">
@@ -69,11 +69,11 @@
 <ellipse fill="gray" stroke="black" cx="374.12" cy="-234" rx="29.39" ry="18"/>
 <text text-anchor="middle" x="374.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Free Ride</text>
 </g>
-<!-- Sequence&#45;&gt;Free Ride -->
+<!-- Cruise&#45;&gt;Free Ride -->
 <g id="edge9" class="edge">
-<title>Sequence&#45;&gt;Free Ride</title>
-<path fill="none" stroke="black" d="M353.04,-287.7C356.1,-280.04 359.78,-270.85 363.2,-262.3"/>
-<polygon fill="black" stroke="black" points="366.44,-263.61 366.91,-253.03 359.94,-261.01 366.44,-263.61"/>
+<title>Cruise&#45;&gt;Free Ride</title>
+<path fill="none" stroke="black" d="M344,-287.7C348.59,-279.67 354.15,-269.95 359.23,-261.05"/>
+<polygon fill="black" stroke="black" points="362.22,-262.88 364.14,-252.46 356.14,-259.4 362.22,-262.88"/>
 </g>
 <!-- Inverter -->
 <g id="node4" class="node">
@@ -81,11 +81,11 @@
 <ellipse fill="ghostwhite" stroke="black" cx="61.12" cy="-162" rx="27" ry="18"/>
 <text text-anchor="middle" x="61.12" y="-159.8" font-family="Times New Roman,serif" font-size="9.00">Inverter</text>
 </g>
-<!-- Selector*&#45;&gt;Inverter -->
+<!-- Yield&#45;&gt;Inverter -->
 <g id="edge3" class="edge">
-<title>Selector*&#45;&gt;Inverter</title>
-<path fill="none" stroke="black" d="M154.21,-220.16C136.17,-209.09 109.94,-192.98 89.92,-180.69"/>
-<polygon fill="black" stroke="black" points="92.02,-177.87 81.66,-175.62 88.35,-183.83 92.02,-177.87"/>
+<title>Yield&#45;&gt;Inverter</title>
+<path fill="none" stroke="black" d="M157.44,-221.13C139,-210 111.2,-193.22 90.2,-180.55"/>
+<polygon fill="black" stroke="black" points="92.17,-177.65 81.8,-175.48 88.55,-183.64 92.17,-177.65"/>
 </g>
 <!-- Inverter* -->
 <g id="node6" class="node">
@@ -93,11 +93,11 @@
 <ellipse fill="ghostwhite" stroke="black" cx="139.12" cy="-162" rx="28.74" ry="18"/>
 <text text-anchor="middle" x="139.12" y="-159.8" font-family="Times New Roman,serif" font-size="9.00">Inverter*</text>
 </g>
-<!-- Selector*&#45;&gt;Inverter* -->
+<!-- Yield&#45;&gt;Inverter* -->
 <g id="edge5" class="edge">
-<title>Selector*&#45;&gt;Inverter*</title>
-<path fill="none" stroke="black" d="M166.22,-215.7C162.19,-207.87 157.34,-198.44 152.86,-189.73"/>
-<polygon fill="black" stroke="black" points="156.04,-188.26 148.36,-180.97 149.82,-191.46 156.04,-188.26"/>
+<title>Yield&#45;&gt;Inverter*</title>
+<path fill="none" stroke="black" d="M167.72,-215.7C163.36,-207.67 158.09,-197.95 153.26,-189.05"/>
+<polygon fill="black" stroke="black" points="156.45,-187.59 148.6,-180.47 150.3,-190.93 156.45,-187.59"/>
 </g>
 <!-- Lane Change Right -->
 <g id="node8" class="node">
@@ -105,11 +105,11 @@
 <ellipse fill="gray" stroke="black" cx="234.12" cy="-162" rx="48.49" ry="18"/>
 <text text-anchor="middle" x="234.12" y="-159.8" font-family="Times New Roman,serif" font-size="9.00">Lane Change Right</text>
 </g>
-<!-- Selector*&#45;&gt;Lane Change Right -->
+<!-- Yield&#45;&gt;Lane Change Right -->
 <g id="edge7" class="edge">
-<title>Selector*&#45;&gt;Lane Change Right</title>
-<path fill="none" stroke="black" d="M189.1,-216.41C196.23,-207.95 205.04,-197.49 212.98,-188.08"/>
-<polygon fill="black" stroke="black" points="215.49,-190.53 219.26,-180.63 210.14,-186.02 215.49,-190.53"/>
+<title>Yield&#45;&gt;Lane Change Right</title>
+<path fill="none" stroke="black" d="M190.34,-216.76C197.22,-208.32 205.78,-197.8 213.5,-188.31"/>
+<polygon fill="black" stroke="black" points="216.02,-190.77 219.62,-180.81 210.59,-186.35 216.02,-190.77"/>
 </g>
 <!-- Vehicle Approaching -->
 <g id="node5" class="node">
@@ -136,46 +136,46 @@
 <polygon fill="black" stroke="black" points="159.37,-119.78 159.84,-109.19 152.87,-117.18 159.37,-119.78"/>
 </g>
 <!-- /new_goal_pos -->
-<g id="node19" class="node">
+<g id="node17" class="node">
 <title>/new_goal_pos</title>
-<polygon fill="white" stroke="blue" points="293.62,-26.5 216.62,-26.5 216.62,-9.5 293.62,-9.5 293.62,-26.5"/>
-<text text-anchor="middle" x="255.12" y="-16.1" font-family="Times New Roman,serif" font-size="8.00" fill="blue">/new_goal_pos: 0</text>
+<polygon fill="white" stroke="blue" points="262.62,-26.5 185.62,-26.5 185.62,-9.5 262.62,-9.5 262.62,-26.5"/>
+<text text-anchor="middle" x="224.12" y="-16.1" font-family="Times New Roman,serif" font-size="8.00" fill="blue">/new_goal_pos: 0</text>
 </g>
 <!-- Lane Change Right&#45;&gt;/new_goal_pos -->
-<g id="edge27" class="edge">
+<g id="edge19" class="edge">
 <title>Lane Change Right&#45;&gt;/new_goal_pos</title>
-<path fill="none" stroke="blue" d="M246.12,-144.26C252.54,-134.26 259.79,-121.01 263.12,-108 269.21,-84.18 264.69,-55.74 260.37,-37.53"/>
-<polygon fill="blue" stroke="blue" points="263.78,-36.77 257.85,-27.98 257.01,-38.55 263.78,-36.77"/>
+<path fill="none" stroke="blue" d="M232.89,-143.59C231.01,-116.86 227.42,-65.92 225.47,-38.18"/>
+<polygon fill="blue" stroke="blue" points="228.97,-38.17 224.78,-28.44 221.99,-38.66 228.97,-38.17"/>
 </g>
 <!-- Free Ride&#45;&gt;/new_goal_pos -->
-<g id="edge26" class="edge">
+<g id="edge18" class="edge">
 <title>Free Ride&#45;&gt;/new_goal_pos</title>
-<path fill="none" stroke="blue" d="M375.75,-215.73C377.83,-184.2 378,-116.46 347.12,-72 333.72,-52.71 310.87,-39.5 291.29,-31.08"/>
-<polygon fill="blue" stroke="blue" points="292.83,-27.93 282.24,-27.46 290.22,-34.43 292.83,-27.93"/>
+<path fill="none" stroke="blue" d="M376.22,-215.62C379.1,-183.61 380.61,-114.71 347.12,-72 341.11,-64.34 290.37,-44.04 255.97,-30.9"/>
+<polygon fill="blue" stroke="blue" points="257.46,-27.72 246.86,-27.45 254.97,-34.27 257.46,-27.72"/>
 </g>
-<!-- Sequence* -->
+<!-- Overtake -->
 <g id="node12" class="node">
-<title>Sequence*</title>
+<title>Overtake</title>
 <polygon fill="orange" stroke="black" points="489.12,-252 435.12,-252 435.12,-216 489.12,-216 489.12,-252"/>
-<text text-anchor="middle" x="462.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Sequence*</text>
+<text text-anchor="middle" x="462.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Overtake</text>
 </g>
-<!-- Selector**&#45;&gt;Sequence* -->
+<!-- Follow&#45;&gt;Overtake -->
 <g id="edge11" class="edge">
-<title>Selector**&#45;&gt;Sequence*</title>
+<title>Follow&#45;&gt;Overtake</title>
 <path fill="none" stroke="black" d="M462.12,-287.7C462.12,-280.41 462.12,-271.73 462.12,-263.54"/>
 <polygon fill="black" stroke="black" points="465.62,-263.62 462.12,-253.62 458.62,-263.62 465.62,-263.62"/>
 </g>
-<!-- Follow -->
+<!-- Follow* -->
 <g id="node16" class="node">
-<title>Follow</title>
-<ellipse fill="gray" stroke="black" cx="534.12" cy="-234" rx="27" ry="18"/>
-<text text-anchor="middle" x="534.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Follow</text>
+<title>Follow*</title>
+<ellipse fill="gray" stroke="black" cx="534.12" cy="-234" rx="27.27" ry="18"/>
+<text text-anchor="middle" x="534.12" y="-231.8" font-family="Times New Roman,serif" font-size="9.00">Follow*</text>
 </g>
-<!-- Selector**&#45;&gt;Follow -->
+<!-- Follow&#45;&gt;Follow* -->
 <g id="edge15" class="edge">
-<title>Selector**&#45;&gt;Follow</title>
-<path fill="none" stroke="black" d="M478.45,-289.12C488.14,-279.69 500.58,-267.61 511.23,-257.25"/>
-<polygon fill="black" stroke="black" points="513.5,-259.93 518.23,-250.45 508.62,-254.91 513.5,-259.93"/>
+<title>Follow&#45;&gt;Follow*</title>
+<path fill="none" stroke="black" d="M477.39,-290.15C487.25,-280.56 500.27,-267.9 511.35,-257.13"/>
+<polygon fill="black" stroke="black" points="513.55,-259.88 518.28,-250.4 508.67,-254.86 513.55,-259.88"/>
 </g>
 <!-- Slow Vehicle -->
 <g id="node13" class="node">
@@ -183,9 +183,9 @@
 <ellipse fill="gray" stroke="black" cx="450.12" cy="-162" rx="36.25" ry="18"/>
 <text text-anchor="middle" x="450.12" y="-159.8" font-family="Times New Roman,serif" font-size="9.00">Slow Vehicle</text>
 </g>
-<!-- Sequence*&#45;&gt;Slow Vehicle -->
+<!-- Overtake&#45;&gt;Slow Vehicle -->
 <g id="edge12" class="edge">
-<title>Sequence*&#45;&gt;Slow Vehicle</title>
+<title>Overtake&#45;&gt;Slow Vehicle</title>
 <path fill="none" stroke="black" d="M459.15,-215.7C457.89,-208.32 456.38,-199.52 454.96,-191.25"/>
 <polygon fill="black" stroke="black" points="458.44,-190.86 453.3,-181.6 451.54,-192.04 458.44,-190.86"/>
 </g>
@@ -195,9 +195,9 @@
 <ellipse fill="gray" stroke="black" cx="544.12" cy="-162" rx="39.67" ry="18"/>
 <text text-anchor="middle" x="544.12" y="-159.8" font-family="Times New Roman,serif" font-size="9.00">Left Lane Free</text>
 </g>
-<!-- Sequence*&#45;&gt;Left Lane Free -->
+<!-- Overtake&#45;&gt;Left Lane Free -->
 <g id="edge13" class="edge">
-<title>Sequence*&#45;&gt;Left Lane Free</title>
+<title>Overtake&#45;&gt;Left Lane Free</title>
 <path fill="none" stroke="black" d="M482.39,-215.7C492.94,-206.69 505.98,-195.56 517.35,-185.85"/>
 <polygon fill="black" stroke="black" points="519.55,-188.57 524.88,-179.42 515,-183.25 519.55,-188.57"/>
 </g>
@@ -207,101 +207,101 @@
 <ellipse fill="gray" stroke="black" cx="648.12" cy="-162" rx="46.38" ry="18"/>
 <text text-anchor="middle" x="648.12" y="-159.8" font-family="Times New Roman,serif" font-size="9.00">Lane Change Left</text>
 </g>
-<!-- Sequence*&#45;&gt;Lane Change Left -->
+<!-- Overtake&#45;&gt;Lane Change Left -->
 <g id="edge14" class="edge">
-<title>Sequence*&#45;&gt;Lane Change Left</title>
+<title>Overtake&#45;&gt;Lane Change Left</title>
 <path fill="none" stroke="black" d="M489.51,-219.72C492.39,-218.42 495.3,-217.16 498.12,-216 532.69,-201.77 572.65,-187.77 602.62,-177.73"/>
 <polygon fill="black" stroke="black" points="603.36,-181.18 611.75,-174.7 601.15,-174.53 603.36,-181.18"/>
 </g>
 <!-- Lane Change Left&#45;&gt;/new_goal_pos -->
-<g id="edge30" class="edge">
-<title>Lane Change Left&#45;&gt;/new_goal_pos</title>
-<path fill="none" stroke="blue" d="M642.79,-143.63C635.44,-122.86 620.06,-88.79 594.12,-72 484.7,-1.21 429.95,-65.93 303.12,-36 297.24,-34.61 291.09,-32.76 285.22,-30.78"/>
-<polygon fill="blue" stroke="blue" points="286.47,-27.51 275.87,-27.44 284.11,-34.1 286.47,-27.51"/>
-</g>
-<!-- Follow&#45;&gt;/new_goal_pos -->
-<g id="edge28" class="edge">
-<title>Follow&#45;&gt;/new_goal_pos</title>
-<path fill="none" stroke="blue" d="M561.29,-233.56C600.11,-232.69 670.35,-224.61 703.12,-180 712.59,-167.1 709.63,-158.62 703.12,-144 683.66,-100.3 666.75,-91.61 623.12,-72 492.58,-13.33 442.59,-68.1 303.12,-36 297.24,-34.65 291.08,-32.81 285.21,-30.84"/>
-<polygon fill="blue" stroke="blue" points="286.45,-27.56 275.86,-27.49 284.09,-34.15 286.45,-27.56"/>
-</g>
-<!-- /agent -->
-<g id="node17" class="node">
-<title>/agent</title>
-<polygon fill="white" stroke="blue" points="161.62,-26.5 58.62,-26.5 58.62,-9.5 161.62,-9.5 161.62,-26.5"/>
-<text text-anchor="middle" x="110.12" y="-16.1" font-family="Times New Roman,serif" font-size="8.00" fill="blue">/agent: {&#39;goal_pos&#39;: [0, ...</text>
-</g>
-<!-- /agent&#45;&gt;Vehicle Approaching -->
-<g id="edge19" class="edge">
-<title>/agent&#45;&gt;Vehicle Approaching</title>
-<path fill="none" stroke="green" d="M103.73,-26.85C96.47,-35.76 84.25,-50.77 73.63,-63.8"/>
-<polygon fill="green" stroke="green" points="71.18,-61.27 67.58,-71.24 76.61,-65.69 71.18,-61.27"/>
-</g>
-<!-- /agent&#45;&gt;Right Lane Free -->
-<g id="edge20" class="edge">
-<title>/agent&#45;&gt;Right Lane Free</title>
-<path fill="none" stroke="green" d="M116.57,-26.93C123.9,-35.93 136.23,-51.07 146.88,-64.15"/>
-<polygon fill="green" stroke="green" points="143.91,-66.05 152.94,-71.59 149.34,-61.63 143.91,-66.05"/>
-</g>
-<!-- /agent&#45;&gt;Lane Change Right -->
-<g id="edge17" class="edge">
-<title>/agent&#45;&gt;Lane Change Right</title>
-<path fill="none" stroke="green" d="M145.06,-26.94C169.63,-34.39 201.21,-48.08 219.12,-72 231.98,-89.18 235.37,-113.46 235.75,-132.32"/>
-<polygon fill="green" stroke="green" points="232.25,-132.25 235.64,-142.29 239.25,-132.33 232.25,-132.25"/>
-</g>
-<!-- /agent&#45;&gt;Clear Road -->
-<g id="edge24" class="edge">
-<title>/agent&#45;&gt;Clear Road</title>
-<path fill="none" stroke="green" d="M144.39,-27C172.6,-34.88 212.46,-49.1 241.12,-72 271.55,-96.32 278.85,-107.02 291.12,-144 297.56,-163.43 298.14,-186.58 297.2,-204.4"/>
-<polygon fill="green" stroke="green" points="293.72,-204.03 296.47,-214.26 300.7,-204.54 293.72,-204.03"/>
-</g>
-<!-- /agent&#45;&gt;Free Ride -->
 <g id="edge16" class="edge">
-<title>/agent&#45;&gt;Free Ride</title>
-<path fill="none" stroke="green" d="M161.82,-26.38C196.23,-33.41 240.85,-46.83 273.12,-72 318.54,-107.43 348.99,-169.43 363.75,-205.27"/>
-<polygon fill="green" stroke="green" points="360.49,-206.52 367.44,-214.51 366.99,-203.93 360.49,-206.52"/>
+<title>Lane Change Left&#45;&gt;/new_goal_pos</title>
+<path fill="none" stroke="blue" d="M632.09,-144.72C610.68,-124.07 570.62,-89.09 529.12,-72 422.47,-28.08 384.15,-63.39 272.12,-36 266.26,-34.57 260.11,-32.69 254.24,-30.71"/>
+<polygon fill="blue" stroke="blue" points="255.48,-27.43 244.89,-27.36 253.13,-34.03 255.48,-27.43"/>
 </g>
-<!-- /agent&#45;&gt;Slow Vehicle -->
-<g id="edge18" class="edge">
-<title>/agent&#45;&gt;Slow Vehicle</title>
-<path fill="none" stroke="green" d="M155.01,-26.96C171.4,-29.85 190.09,-33.1 207.12,-36 255.52,-44.24 388.54,-39.25 425.12,-72 441.95,-87.07 447.83,-112.48 449.71,-132.3"/>
-<polygon fill="green" stroke="green" points="446.22,-132.51 450.33,-142.27 453.2,-132.07 446.22,-132.51"/>
-</g>
-<!-- /agent&#45;&gt;Left Lane Free -->
-<g id="edge22" class="edge">
-<title>/agent&#45;&gt;Left Lane Free</title>
-<path fill="none" stroke="green" d="M154.02,-26.94C170.64,-29.88 189.73,-33.18 207.12,-36 314.46,-53.39 351.21,-24.68 449.12,-72 479.82,-86.84 507.33,-115.11 524.75,-135.82"/>
-<polygon fill="green" stroke="green" points="522.03,-138.01 531.06,-143.55 527.45,-133.59 522.03,-138.01"/>
-</g>
-<!-- /agent&#45;&gt;Lane Change Left -->
-<g id="edge23" class="edge">
-<title>/agent&#45;&gt;Lane Change Left</title>
-<path fill="none" stroke="green" d="M153.02,-26.95C169.86,-29.96 189.37,-33.31 207.12,-36 331.16,-54.83 367.88,-32.96 487.12,-72 535.46,-87.83 585.96,-118.41 617.23,-139.26"/>
-<polygon fill="green" stroke="green" points="615.18,-142.1 625.43,-144.81 619.11,-136.3 615.18,-142.1"/>
-</g>
-<!-- /agent&#45;&gt;Follow -->
-<g id="edge21" class="edge">
-<title>/agent&#45;&gt;Follow</title>
-<path fill="none" stroke="green" d="M152.04,-26.96C169.09,-30.04 189,-33.43 207.12,-36 318.81,-51.83 641.43,-49.55 703.12,-144 736.94,-195.8 631.71,-219.37 572.14,-228.34"/>
-<polygon fill="green" stroke="green" points="571.79,-224.85 562.39,-229.73 572.78,-231.78 571.79,-224.85"/>
+<!-- Follow*&#45;&gt;/new_goal_pos -->
+<g id="edge17" class="edge">
+<title>Follow*&#45;&gt;/new_goal_pos</title>
+<path fill="none" stroke="blue" d="M560.88,-229.95C617.04,-222.4 739.14,-199.29 703.12,-144 595.32,21.46 464.08,-82.36 272.12,-36 266.25,-34.58 260.1,-32.71 254.24,-30.73"/>
+<polygon fill="blue" stroke="blue" points="255.48,-27.46 244.88,-27.39 253.12,-34.05 255.48,-27.46"/>
 </g>
 <!-- Setup -->
 <g id="node18" class="node">
 <title>Setup</title>
-<ellipse fill="gray" stroke="blue" cx="339.12" cy="-18" rx="27" ry="18"/>
-<text text-anchor="middle" x="339.12" y="-16.4" font-family="Times New Roman,serif" font-size="7.00" fill="blue">Setup</text>
-</g>
-<!-- Setup&#45;&gt;/agent -->
-<g id="edge25" class="edge">
-<title>Setup&#45;&gt;/agent</title>
-<path fill="none" stroke="blue" d="M324.52,-33.57C316.17,-41.33 305,-49.9 293.12,-54 239.3,-72.56 173.09,-48.65 136.89,-31.85"/>
-<polygon fill="blue" stroke="blue" points="138.56,-28.76 128.03,-27.57 135.52,-35.07 138.56,-28.76"/>
+<ellipse fill="gray" stroke="blue" cx="308.12" cy="-18" rx="27" ry="18"/>
+<text text-anchor="middle" x="308.12" y="-16.4" font-family="Times New Roman,serif" font-size="7.00" fill="blue">Setup</text>
 </g>
 <!-- Setup&#45;&gt;/new_goal_pos -->
-<g id="edge29" class="edge">
+<g id="edge20" class="edge">
 <title>Setup&#45;&gt;/new_goal_pos</title>
-<path fill="none" stroke="blue" d="M311.88,-18C309.62,-18 307.37,-18 305.11,-18"/>
-<polygon fill="blue" stroke="blue" points="305.35,-14.5 295.35,-18 305.35,-21.5 305.35,-14.5"/>
+<path fill="none" stroke="blue" d="M280.88,-18C278.62,-18 276.37,-18 274.11,-18"/>
+<polygon fill="blue" stroke="blue" points="274.35,-14.5 264.35,-18 274.35,-21.5 274.35,-14.5"/>
+</g>
+<!-- /agent -->
+<g id="node19" class="node">
+<title>/agent</title>
+<polygon fill="white" stroke="blue" points="142.62,-26.5 39.62,-26.5 39.62,-9.5 142.62,-9.5 142.62,-26.5"/>
+<text text-anchor="middle" x="91.12" y="-16.1" font-family="Times New Roman,serif" font-size="8.00" fill="blue">/agent: {&#39;goal_pos&#39;: [0, ...</text>
+</g>
+<!-- Setup&#45;&gt;/agent -->
+<g id="edge30" class="edge">
+<title>Setup&#45;&gt;/agent</title>
+<path fill="none" stroke="blue" d="M293.52,-33.57C285.17,-41.33 274,-49.9 262.12,-54 212.17,-71.22 151.04,-48.35 117.06,-31.97"/>
+<polygon fill="blue" stroke="blue" points="118.89,-28.97 108.38,-27.61 115.75,-35.23 118.89,-28.97"/>
+</g>
+<!-- /agent&#45;&gt;Vehicle Approaching -->
+<g id="edge27" class="edge">
+<title>/agent&#45;&gt;Vehicle Approaching</title>
+<path fill="none" stroke="green" d="M86.9,-26.76C82.29,-35.25 74.65,-49.33 67.8,-61.95"/>
+<polygon fill="green" stroke="green" points="64.73,-60.27 63.04,-70.72 70.88,-63.61 64.73,-60.27"/>
+</g>
+<!-- /agent&#45;&gt;Right Lane Free -->
+<g id="edge24" class="edge">
+<title>/agent&#45;&gt;Right Lane Free</title>
+<path fill="none" stroke="green" d="M99.41,-26.64C109.48,-35.92 126.96,-52.01 141.63,-65.53"/>
+<polygon fill="green" stroke="green" points="139.03,-67.89 148.76,-72.09 143.77,-62.74 139.03,-67.89"/>
+</g>
+<!-- /agent&#45;&gt;Lane Change Right -->
+<g id="edge26" class="edge">
+<title>/agent&#45;&gt;Lane Change Right</title>
+<path fill="none" stroke="green" d="M138.83,-26.94C166.43,-34.05 199.49,-47.35 219.12,-72 232.55,-88.87 235.88,-113.33 236.08,-132.34"/>
+<polygon fill="green" stroke="green" points="232.58,-132.05 235.88,-142.12 239.58,-132.19 232.58,-132.05"/>
+</g>
+<!-- /agent&#45;&gt;Clear Road -->
+<g id="edge28" class="edge">
+<title>/agent&#45;&gt;Clear Road</title>
+<path fill="none" stroke="green" d="M134.97,-26.94C166.89,-34.41 209.83,-48.13 241.12,-72 272.09,-95.63 278.85,-107.02 291.12,-144 297.56,-163.43 298.14,-186.58 297.2,-204.4"/>
+<polygon fill="green" stroke="green" points="293.72,-204.03 296.47,-214.26 300.7,-204.54 293.72,-204.03"/>
+</g>
+<!-- /agent&#45;&gt;Free Ride -->
+<g id="edge25" class="edge">
+<title>/agent&#45;&gt;Free Ride</title>
+<path fill="none" stroke="green" d="M130.15,-26.95C176.57,-36.98 250.6,-54.99 273.12,-72 319.21,-106.82 349.49,-169.3 364.03,-205.33"/>
+<polygon fill="green" stroke="green" points="360.76,-206.58 367.65,-214.62 367.28,-204.03 360.76,-206.58"/>
+</g>
+<!-- /agent&#45;&gt;Slow Vehicle -->
+<g id="edge23" class="edge">
+<title>/agent&#45;&gt;Slow Vehicle</title>
+<path fill="none" stroke="green" d="M128.69,-26.97C143.45,-29.98 160.54,-33.32 176.12,-36 231.21,-45.49 383.09,-35.12 425.12,-72 442.18,-86.97 448.02,-112.57 449.83,-132.48"/>
+<polygon fill="green" stroke="green" points="446.32,-132.42 450.4,-142.2 453.31,-132.01 446.32,-132.42"/>
+</g>
+<!-- /agent&#45;&gt;Left Lane Free -->
+<g id="edge29" class="edge">
+<title>/agent&#45;&gt;Left Lane Free</title>
+<path fill="none" stroke="green" d="M128.26,-26.99C143.1,-30.03 160.38,-33.4 176.12,-36 297.29,-56.06 339.22,-19.2 450.12,-72 480.73,-86.58 507.92,-114.89 525.07,-135.68"/>
+<polygon fill="green" stroke="green" points="522.3,-137.82 531.28,-143.45 527.77,-133.45 522.3,-137.82"/>
+</g>
+<!-- /agent&#45;&gt;Lane Change Left -->
+<g id="edge21" class="edge">
+<title>/agent&#45;&gt;Lane Change Left</title>
+<path fill="none" stroke="green" d="M127.4,-26.94C142.42,-30.05 160.06,-33.47 176.12,-36 314,-57.71 355.24,-29.25 488.12,-72 536.44,-87.55 586.75,-118.34 617.75,-139.3"/>
+<polygon fill="green" stroke="green" points="615.64,-142.09 625.86,-144.87 619.6,-136.32 615.64,-142.09"/>
+</g>
+<!-- /agent&#45;&gt;Follow* -->
+<g id="edge22" class="edge">
+<title>/agent&#45;&gt;Follow*</title>
+<path fill="none" stroke="green" d="M126.96,-26.99C142.07,-30.14 159.89,-33.58 176.12,-36 336.91,-59.97 382.9,-30.64 540.12,-72 616.71,-92.15 659.88,-77.64 703.12,-144 736.89,-195.83 631.68,-219.39 572.13,-228.35"/>
+<polygon fill="green" stroke="green" points="571.78,-224.86 562.38,-229.74 572.77,-231.79 571.78,-224.86"/>
 </g>
 </g>
 </svg>
